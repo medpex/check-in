@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Camera, CheckCircle, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -16,8 +17,11 @@ const Scanner = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [scannedGuests, setScannedGuests] = useState<ScannedGuest[]>([]);
   const [lastScanned, setLastScanned] = useState<ScannedGuest | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const qrScannerRef = useRef<QrScanner | null>(null);
+  const lastScannedCodeRef = useRef<string>("");
+  const lastScannedTimeRef = useRef<number>(0);
 
   useEffect(() => {
     // Lade bereits eingecheckte Gäste
@@ -56,15 +60,37 @@ const Scanner = () => {
       qrScannerRef.current = null;
     }
     setIsScanning(false);
+    setIsProcessing(false);
+    lastScannedCodeRef.current = "";
+    lastScannedTimeRef.current = 0;
     toast.info("Scanner gestoppt");
   };
 
   const handleScanResult = (data: string) => {
+    // Verhindere mehrfache Verarbeitung des gleichen Codes
+    const now = Date.now();
+    const timeSinceLastScan = now - lastScannedTimeRef.current;
+    
+    // Ignoriere den gleichen Code wenn er innerhalb von 3 Sekunden gescannt wurde
+    if (data === lastScannedCodeRef.current && timeSinceLastScan < 3000) {
+      return;
+    }
+
+    // Verhindere gleichzeitige Verarbeitung
+    if (isProcessing) {
+      return;
+    }
+
+    setIsProcessing(true);
+    lastScannedCodeRef.current = data;
+    lastScannedTimeRef.current = now;
+
     try {
       const guestData = JSON.parse(data);
       
       if (!guestData.id || !guestData.name) {
         toast.error("Ungültiger QR-Code");
+        setIsProcessing(false);
         return;
       }
 
@@ -73,6 +99,7 @@ const Scanner = () => {
       
       if (alreadyCheckedIn) {
         toast.warning(`${guestData.name} ist bereits eingecheckt!`);
+        setIsProcessing(false);
         return;
       }
 
@@ -91,16 +118,14 @@ const Scanner = () => {
       
       toast.success(`${guestData.name} erfolgreich eingecheckt!`);
       
-      // Stoppe kurz das Scannen um Mehrfach-Scans zu vermeiden
-      setTimeout(() => {
-        if (qrScannerRef.current) {
-          qrScannerRef.current.start();
-        }
-      }, 2000);
-      
     } catch (error) {
       console.error('Fehler beim Verarbeiten des QR-Codes:', error);
       toast.error("QR-Code konnte nicht verarbeitet werden");
+    } finally {
+      // Setze Processing-Status nach kurzer Verzögerung zurück
+      setTimeout(() => {
+        setIsProcessing(false);
+      }, 1000);
     }
   };
 
@@ -131,7 +156,14 @@ const Scanner = () => {
         <div className="grid lg:grid-cols-2 gap-8">
           <Card className="backdrop-blur-sm bg-white/20 border-white/30">
             <CardHeader>
-              <CardTitle className="text-white text-center">Kamera Scanner</CardTitle>
+              <CardTitle className="text-white text-center">
+                Kamera Scanner
+                {isProcessing && (
+                  <div className="text-sm text-yellow-300 mt-1">
+                    Verarbeite QR-Code...
+                  </div>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="relative">
