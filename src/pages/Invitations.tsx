@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { ArrowLeft, Download, QrCode, Plus, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -82,7 +81,7 @@ const Invitations = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400">
+    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
           <Link to="/">

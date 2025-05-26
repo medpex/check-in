@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ArrowLeft, Users, CheckCircle, XCircle, Download } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -65,7 +64,7 @@ const Guests = () => {
   const notCheckedInCount = totalCount - checkedInCount;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400">
+    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
           <Link to="/">
