@@ -11,7 +11,7 @@ cp .env.example .env
 
 Dann bearbeite die `.env` Datei:
 ```
-REACT_APP_API_URL=http://localhost:3001/api
+VITE_API_URL=http://localhost:3001/api
 ```
 
 ## Erforderliche API Endpunkte
