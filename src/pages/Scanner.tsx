@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Camera, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -24,12 +25,6 @@ const Scanner = () => {
 
   const { data: scannedGuests = [], refetch } = useCheckedInGuests();
   const checkInMutation = useCheckInGuest();
-
-  useEffect(() => {
-    // Lade bereits eingecheckte Gäste
-    const checkedInGuests = JSON.parse(localStorage.getItem('checked-in-guests') || '[]');
-    setScannedGuests(checkedInGuests);
-  }, []);
 
   const startScanning = async () => {
     if (!videoRef.current) return;
