@@ -1,84 +1,54 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { ArrowLeft, Download, QrCode, Plus, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
-import QRCodeLib from "qrcode";
-
-interface Guest {
-  id: string;
-  name: string;
-  qrCode: string;
-}
+import { useGuests, useCreateGuest, useDeleteGuest } from "@/hooks/useGuests";
 
 const Invitations = () => {
-  const [guests, setGuests] = useState<Guest[]>([]);
   const [newGuestName, setNewGuestName] = useState("");
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  const generateGuestId = () => {
-    return Math.random().toString(36).substr(2, 9);
-  };
-
-  const generateQRCode = async (guestId: string, name: string) => {
-    const data = JSON.stringify({ id: guestId, name });
-    try {
-      const qrCodeDataURL = await QRCodeLib.toDataURL(data, {
-        width: 300,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
-      });
-      return qrCodeDataURL;
-    } catch (error) {
-      console.error('Fehler beim Erstellen des QR-Codes:', error);
-      return '';
-    }
-  };
+  const { data: guests = [], isLoading, error } = useGuests();
+  const createGuestMutation = useCreateGuest();
+  const deleteGuestMutation = useDeleteGuest();
 
   const addGuest = async () => {
     if (!newGuestName.trim()) {
-      toast.error("Bitte gib einen Namen ein");
       return;
     }
 
-    const guestId = generateGuestId();
-    const qrCode = await generateQRCode(guestId, newGuestName);
-    
-    const newGuest: Guest = {
-      id: guestId,
-      name: newGuestName,
-      qrCode
-    };
-
-    setGuests([...guests, newGuest]);
-    setNewGuestName("");
-    
-    // Speichere in localStorage
-    const existingGuests = JSON.parse(localStorage.getItem('party-guests') || '[]');
-    existingGuests.push(newGuest);
-    localStorage.setItem('party-guests', JSON.stringify(existingGuests));
-    
-    toast.success(`Einladung für ${newGuestName} erstellt!`);
+    createGuestMutation.mutate(newGuestName, {
+      onSuccess: () => {
+        setNewGuestName("");
+      }
+    });
   };
 
   const removeGuest = (guestId: string) => {
-    const updatedGuests = guests.filter(guest => guest.id !== guestId);
-    setGuests(updatedGuests);
-    localStorage.setItem('party-guests', JSON.stringify(updatedGuests));
-    toast.success("Gast entfernt");
+    deleteGuestMutation.mutate(guestId);
   };
 
-  const downloadQRCode = (guest: Guest) => {
+  const downloadQRCode = (guest: any) => {
     const link = document.createElement('a');
     link.download = `einladung-${guest.name}.png`;
-    link.href = guest.qrCode;
+    link.href = guest.qr_code;
     link.click();
   };
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700 flex items-center justify-center">
+        <Card className="backdrop-blur-sm bg-white/20 border-white/30 max-w-md">
+          <CardContent className="pt-6 text-center">
+            <p className="text-white text-lg mb-4">Verbindung zum Server fehlgeschlagen</p>
+            <p className="text-white/70 text-sm">
+              Stelle sicher, dass dein API-Server läuft und die REACT_APP_API_URL korrekt konfiguriert ist.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700">
@@ -107,53 +77,67 @@ const Invitations = () => {
                 onChange={(e) => setNewGuestName(e.target.value)}
                 className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
                 onKeyPress={(e) => e.key === 'Enter' && addGuest()}
+                disabled={createGuestMutation.isPending}
               />
-              <Button onClick={addGuest} className="bg-white/20 hover:bg-white/30 text-white">
+              <Button 
+                onClick={addGuest} 
+                className="bg-white/20 hover:bg-white/30 text-white"
+                disabled={createGuestMutation.isPending || !newGuestName.trim()}
+              >
                 <Plus className="h-4 w-4 mr-2" />
-                Hinzufügen
+                {createGuestMutation.isPending ? 'Erstelle...' : 'Hinzufügen'}
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {guests.map((guest) => (
-            <Card key={guest.id} className="backdrop-blur-sm bg-white/20 border-white/30">
-              <CardHeader className="text-center">
-                <CardTitle className="text-white">{guest.name}</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center space-y-4">
-                <div className="bg-white p-4 rounded-lg">
-                  <img 
-                    src={guest.qrCode} 
-                    alt={`QR Code für ${guest.name}`}
-                    className="w-full max-w-[200px] mx-auto"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={() => downloadQRCode(guest)}
-                    className="flex-1 bg-white/20 hover:bg-white/30 text-white"
-                    size="sm"
-                  >
-                    <Download className="h-4 w-4 mr-1" />
-                    Download
-                  </Button>
-                  <Button 
-                    onClick={() => removeGuest(guest.id)}
-                    variant="destructive"
-                    size="sm"
-                    className="bg-red-500/20 hover:bg-red-500/30"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {isLoading ? (
+          <Card className="backdrop-blur-sm bg-white/20 border-white/30 text-center py-12">
+            <CardContent>
+              <p className="text-white/70 text-lg">Lade Gäste...</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {guests.map((guest) => (
+              <Card key={guest.id} className="backdrop-blur-sm bg-white/20 border-white/30">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-white">{guest.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center space-y-4">
+                  <div className="bg-white p-4 rounded-lg">
+                    <img 
+                      src={guest.qr_code} 
+                      alt={`QR Code für ${guest.name}`}
+                      className="w-full max-w-[200px] mx-auto"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => downloadQRCode(guest)}
+                      className="flex-1 bg-white/20 hover:bg-white/30 text-white"
+                      size="sm"
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Download
+                    </Button>
+                    <Button 
+                      onClick={() => removeGuest(guest.id)}
+                      variant="destructive"
+                      size="sm"
+                      className="bg-red-500/20 hover:bg-red-500/30"
+                      disabled={deleteGuestMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
-        {guests.length === 0 && (
+        {!isLoading && guests.length === 0 && (
           <Card className="backdrop-blur-sm bg-white/20 border-white/30 text-center py-12">
             <CardContent>
               <QrCode className="h-16 w-16 text-white/50 mx-auto mb-4" />
@@ -166,8 +150,6 @@ const Invitations = () => {
             </CardContent>
           </Card>
         )}
-
-        <canvas ref={canvasRef} style={{ display: 'none' }} />
       </div>
     </div>
   );

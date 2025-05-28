@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
 import { ArrowLeft, Users, CheckCircle, XCircle, Download } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useGuests, useCheckedInGuests } from "@/hooks/useGuests";
 
 interface Guest {
   id: string;
@@ -18,25 +18,16 @@ interface CheckedInGuest {
 }
 
 const Guests = () => {
-  const [allGuests, setAllGuests] = useState<Guest[]>([]);
-  const [checkedInGuests, setCheckedInGuests] = useState<CheckedInGuest[]>([]);
-
-  useEffect(() => {
-    // Lade alle Gäste und eingecheckte Gäste
-    const guests = JSON.parse(localStorage.getItem('party-guests') || '[]');
-    const checkedIn = JSON.parse(localStorage.getItem('checked-in-guests') || '[]');
-    
-    setAllGuests(guests);
-    setCheckedInGuests(checkedIn);
-  }, []);
+  const { data: allGuests = [], isLoading: isLoadingGuests } = useGuests();
+  const { data: checkedInGuests = [], isLoading: isLoadingCheckedIn } = useCheckedInGuests();
 
   const isGuestCheckedIn = (guestId: string) => {
-    return checkedInGuests.some(guest => guest.id === guestId);
+    return checkedInGuests.some(guest => guest.guest_id === guestId);
   };
 
   const getCheckInTime = (guestId: string) => {
-    const checkedInGuest = checkedInGuests.find(guest => guest.id === guestId);
-    return checkedInGuest?.timestamp || null;
+    const checkedInGuest = checkedInGuests.find(guest => guest.guest_id === guestId);
+    return checkedInGuest ? new Date(checkedInGuest.timestamp).toLocaleString('de-DE') : null;
   };
 
   const exportGuestList = () => {
@@ -62,6 +53,18 @@ const Guests = () => {
   const checkedInCount = checkedInGuests.length;
   const totalCount = allGuests.length;
   const notCheckedInCount = totalCount - checkedInCount;
+
+  if (isLoadingGuests || isLoadingCheckedIn) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700 flex items-center justify-center">
+        <Card className="backdrop-blur-sm bg-white/20 border-white/30">
+          <CardContent className="pt-6 text-center">
+            <p className="text-white text-lg">Lade Gästedaten...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700">
@@ -108,6 +111,7 @@ const Guests = () => {
               onClick={exportGuestList}
               className="bg-white/20 hover:bg-white/30 text-white"
               size="sm"
+              disabled={allGuests.length === 0}
             >
               <Download className="h-4 w-4 mr-2" />
               Exportieren

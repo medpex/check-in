@@ -1,11 +1,11 @@
-
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Camera, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import QrScanner from "qr-scanner";
+import { useCheckedInGuests, useCheckInGuest } from "@/hooks/useGuests";
 
 interface ScannedGuest {
   id: string;
@@ -15,13 +15,15 @@ interface ScannedGuest {
 
 const Scanner = () => {
   const [isScanning, setIsScanning] = useState(false);
-  const [scannedGuests, setScannedGuests] = useState<ScannedGuest[]>([]);
   const [lastScanned, setLastScanned] = useState<ScannedGuest | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const qrScannerRef = useRef<QrScanner | null>(null);
   const lastScannedCodeRef = useRef<string>("");
   const lastScannedTimeRef = useRef<number>(0);
+
+  const { data: scannedGuests = [], refetch } = useCheckedInGuests();
+  const checkInMutation = useCheckInGuest();
 
   useEffect(() => {
     // Lade bereits eingecheckte Gäste
@@ -95,7 +97,7 @@ const Scanner = () => {
       }
 
       // Prüfe ob Gast bereits eingecheckt ist
-      const alreadyCheckedIn = scannedGuests.some(guest => guest.id === guestData.id);
+      const alreadyCheckedIn = scannedGuests.some(guest => guest.guest_id === guestData.id);
       
       if (alreadyCheckedIn) {
         toast.warning(`${guestData.name} ist bereits eingecheckt!`);
@@ -103,26 +105,33 @@ const Scanner = () => {
         return;
       }
 
-      const scannedGuest: ScannedGuest = {
-        id: guestData.id,
-        name: guestData.name,
-        timestamp: new Date().toLocaleString('de-DE')
-      };
-
-      const updatedGuests = [...scannedGuests, scannedGuest];
-      setScannedGuests(updatedGuests);
-      setLastScanned(scannedGuest);
-      
-      // Speichere in localStorage
-      localStorage.setItem('checked-in-guests', JSON.stringify(updatedGuests));
-      
-      toast.success(`${guestData.name} erfolgreich eingecheckt!`);
+      // Check-in über API
+      checkInMutation.mutate(
+        { guestId: guestData.id, name: guestData.name },
+        {
+          onSuccess: (checkedInGuest) => {
+            const scannedGuest: ScannedGuest = {
+              id: checkedInGuest.id,
+              name: checkedInGuest.name,
+              timestamp: new Date(checkedInGuest.timestamp).toLocaleString('de-DE')
+            };
+            setLastScanned(scannedGuest);
+            refetch(); // Aktualisiere die Gästeliste
+          },
+          onError: (error) => {
+            console.error('Fehler beim Check-in:', error);
+          },
+          onSettled: () => {
+            setTimeout(() => {
+              setIsProcessing(false);
+            }, 1000);
+          }
+        }
+      );
       
     } catch (error) {
       console.error('Fehler beim Verarbeiten des QR-Codes:', error);
       toast.error("QR-Code konnte nicht verarbeitet werden");
-    } finally {
-      // Setze Processing-Status nach kurzer Verzögerung zurück
       setTimeout(() => {
         setIsProcessing(false);
       }, 1000);
@@ -235,7 +244,9 @@ const Scanner = () => {
                       >
                         <div>
                           <p className="text-white font-medium">{guest.name}</p>
-                          <p className="text-white/70 text-sm">{guest.timestamp}</p>
+                          <p className="text-white/70 text-sm">
+                            {new Date(guest.timestamp).toLocaleString('de-DE')}
+                          </p>
                         </div>
                         <CheckCircle className="h-5 w-5 text-green-400" />
                       </div>
