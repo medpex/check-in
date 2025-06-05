@@ -1,4 +1,3 @@
-
 # 🎉 QR-Code Scanner Party App
 
 Eine moderne Web-Anwendung zum Verwalten von Gästen und Check-ins bei Veranstaltungen mittels QR-Code-Scanner.
@@ -30,8 +29,9 @@ Eine moderne Web-Anwendung zum Verwalten von Gästen und Check-ins bei Veranstal
 - **Node.js** (Version 18 oder höher)
 - **npm** oder **yarn**
 - **Moderne Browser** mit Kamera-Zugriff
+- **Docker** (optional, für Container-Deployment)
 
-### Installation
+### Standard Installation
 
 ```bash
 # Repository klonen
@@ -45,7 +45,22 @@ npm install
 npm run dev
 ```
 
-Die App ist dann unter `http://localhost:5173` erreichbar.
+### 🐳 Docker Installation
+
+Für eine isolierte und reproduzierbare Entwicklungsumgebung:
+
+```bash
+# Mit Docker Compose starten
+docker-compose up
+
+# Oder manuell:
+docker build -t qr-scanner-app .
+docker run -p 8080:8080 qr-scanner-app
+```
+
+Siehe [DOCKER.md](DOCKER.md) für detaillierte Docker-Anweisungen.
+
+Die App ist dann unter `http://localhost:8080` erreichbar.
 
 ### Backend Setup (Optional)
 
@@ -79,6 +94,12 @@ Siehe [API Setup Guide](README_API.md) für Backend-Konfiguration.
 - **TanStack Query** - Server State Management
 - **React Router** - Client-side Routing
 - **Sonner** - Toast Notifications
+
+### 🐳 Containerization
+- **Docker** - Containerized Development & Deployment
+- **Docker Compose** - Multi-Service Orchestration
+- **Nginx** - Production Web Server
+- **Multi-Stage Build** - Optimized Image Size
 
 ## 📱 Screenshots
 
@@ -136,6 +157,21 @@ npm run lint
 npm run type-check
 ```
 
+### 🐳 Docker Commands
+
+```bash
+# Development mit Docker
+docker-compose up
+
+# Production Build
+docker-compose --profile production up qr-scanner-prod
+
+# Container stoppen
+docker-compose down
+```
+
+Siehe [DOCKER.md](DOCKER.md) für alle Docker-Befehle.
+
 ### Projekt-Struktur
 
 ```
@@ -164,6 +200,16 @@ src/
 2. Auto-Deploy ist standardmäßig aktiviert
 3. App ist live unter deiner Lovable-URL
 
+### Docker Deployment
+
+```bash
+# Production-Image erstellen
+docker build -t qr-scanner-app --target production .
+
+# Container starten
+docker run -d -p 80:80 qr-scanner-app
+```
+
 ### Manuelles Deployment
 ```bash
 # Build erstellen
@@ -176,7 +222,9 @@ npm run build
 - Vercel
 - Netlify  
 - GitHub Pages
+- Docker Hub
 - Jeder Static Hosting Service
+- **Kubernetes** (mit Docker Images)
 
 ## 🔧 Konfiguration
 
@@ -187,6 +235,14 @@ Die App unterstützt sowohl Mock-Daten als auch echte Backend-APIs:
 ```typescript
 // .env Konfiguration
 VITE_API_URL=http://localhost:3001/api
+```
+
+### Docker Environment
+
+```bash
+# .env für Docker
+VITE_API_URL=http://localhost:3001/api
+NODE_ENV=development
 ```
 
 ### Browser-Berechtigungen
@@ -222,6 +278,11 @@ Wir freuen uns über Beiträge! Siehe [CONTRIBUTING.md](CONTRIBUTING.md) für De
 - **Große QR-Codes** können Scanning verlangsamen
 - **Schwache Beleuchtung** beeinträchtigt Scan-Genauigkeit
 
+### Docker-spezifische Probleme
+- **Kamera-Zugriff** - Benötigt HTTPS in Production
+- **Hot Reload** - Volume-Mounting erforderlich für Live-Updates
+- **Port-Konflikte** - Standard-Port 8080 könnte belegt sein
+
 ## 📊 Roadmap
 
 ### Version 2.0
@@ -251,6 +312,8 @@ Erstellt mit ❤️ von [Dein Name]
 - [shadcn/ui](https://ui.shadcn.com/) - Beautiful UI Components
 - [qr-scanner](https://github.com/nimiq/qr-scanner) - QR Scanning Library
 - [Lucide](https://lucide.dev/) - Beautiful Icons
+- [Docker](https://www.docker.com/) - Containerization Platform
+- [Nginx](https://nginx.org/) - High-Performance Web Server
 
 ---
 
