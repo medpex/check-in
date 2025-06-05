@@ -45,6 +45,11 @@ Dein API-Server muss folgende Endpunkte bereitstellen:
 - Response: `CheckedInGuest`
 - Error 409: Falls Gast bereits eingecheckt
 
+**DELETE `/api/checkins/:guest_id`**
+- Checkt einen Gast aus (entfernt ihn aus der Check-in Liste)
+- Response: Status 200
+- Error 404: Falls Gast nicht eingecheckt
+
 ## Datentypen
 
 ```typescript

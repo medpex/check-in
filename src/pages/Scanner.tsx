@@ -1,23 +1,27 @@
 
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Camera, CheckCircle } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import QrScanner from "qr-scanner";
-import { useCheckedInGuests, useCheckInGuest } from "@/hooks/useGuests";
+import { useCheckedInGuests, useCheckInGuest, useCheckOutGuest } from "@/hooks/useGuests";
 
 interface ScannedGuest {
   id: string;
   name: string;
   timestamp: string;
+  action: 'checkin' | 'checkout';
 }
+
+type ScanMode = 'checkin' | 'checkout';
 
 const Scanner = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [lastScanned, setLastScanned] = useState<ScannedGuest | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [scanMode, setScanMode] = useState<ScanMode>('checkin');
   const videoRef = useRef<HTMLVideoElement>(null);
   const qrScannerRef = useRef<QrScanner | null>(null);
   const lastScannedCodeRef = useRef<string>("");
@@ -25,6 +29,7 @@ const Scanner = () => {
 
   const { data: scannedGuests = [], refetch } = useCheckedInGuests();
   const checkInMutation = useCheckInGuest();
+  const checkOutMutation = useCheckOutGuest();
 
   const startScanning = async () => {
     if (!videoRef.current) return;
@@ -91,38 +96,69 @@ const Scanner = () => {
         return;
       }
 
-      // Prüfe ob Gast bereits eingecheckt ist
       const alreadyCheckedIn = scannedGuests.some(guest => guest.guest_id === guestData.id);
-      
-      if (alreadyCheckedIn) {
-        toast.warning(`${guestData.name} ist bereits eingecheckt!`);
-        setIsProcessing(false);
-        return;
-      }
 
-      // Check-in über API
-      checkInMutation.mutate(
-        { guestId: guestData.id, name: guestData.name },
-        {
-          onSuccess: (checkedInGuest) => {
+      if (scanMode === 'checkin') {
+        if (alreadyCheckedIn) {
+          toast.warning(`${guestData.name} ist bereits eingecheckt!`);
+          setIsProcessing(false);
+          return;
+        }
+
+        // Check-in über API
+        checkInMutation.mutate(
+          { guestId: guestData.id, name: guestData.name },
+          {
+            onSuccess: (checkedInGuest) => {
+              const scannedGuest: ScannedGuest = {
+                id: checkedInGuest.id,
+                name: checkedInGuest.name,
+                timestamp: new Date(checkedInGuest.timestamp).toLocaleString('de-DE'),
+                action: 'checkin'
+              };
+              setLastScanned(scannedGuest);
+              refetch();
+            },
+            onError: (error) => {
+              console.error('Fehler beim Check-in:', error);
+            },
+            onSettled: () => {
+              setTimeout(() => {
+                setIsProcessing(false);
+              }, 1000);
+            }
+          }
+        );
+      } else {
+        // Check-out Modus
+        if (!alreadyCheckedIn) {
+          toast.warning(`${guestData.name} ist nicht eingecheckt!`);
+          setIsProcessing(false);
+          return;
+        }
+
+        // Check-out über API
+        checkOutMutation.mutate(guestData.id, {
+          onSuccess: () => {
             const scannedGuest: ScannedGuest = {
-              id: checkedInGuest.id,
-              name: checkedInGuest.name,
-              timestamp: new Date(checkedInGuest.timestamp).toLocaleString('de-DE')
+              id: guestData.id,
+              name: guestData.name,
+              timestamp: new Date().toLocaleString('de-DE'),
+              action: 'checkout'
             };
             setLastScanned(scannedGuest);
-            refetch(); // Aktualisiere die Gästeliste
+            refetch();
           },
           onError: (error) => {
-            console.error('Fehler beim Check-in:', error);
+            console.error('Fehler beim Check-out:', error);
           },
           onSettled: () => {
             setTimeout(() => {
               setIsProcessing(false);
             }, 1000);
           }
-        }
-      );
+        });
+      }
       
     } catch (error) {
       console.error('Fehler beim Verarbeiten des QR-Codes:', error);
@@ -170,6 +206,34 @@ const Scanner = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Mode Selection Buttons */}
+              <div className="flex gap-2 mb-4">
+                <Button
+                  onClick={() => setScanMode('checkin')}
+                  className={`flex-1 ${
+                    scanMode === 'checkin' 
+                      ? 'bg-green-500 hover:bg-green-600' 
+                      : 'bg-white/20 hover:bg-white/30'
+                  } text-white`}
+                  disabled={isScanning}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Check-in
+                </Button>
+                <Button
+                  onClick={() => setScanMode('checkout')}
+                  className={`flex-1 ${
+                    scanMode === 'checkout' 
+                      ? 'bg-red-500 hover:bg-red-600' 
+                      : 'bg-white/20 hover:bg-white/30'
+                  } text-white`}
+                  disabled={isScanning}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Check-out
+                </Button>
+              </div>
+
               <div className="relative">
                 <video
                   ref={videoRef}
@@ -187,10 +251,14 @@ const Scanner = () => {
                 {!isScanning ? (
                   <Button 
                     onClick={startScanning}
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+                    className={`flex-1 text-white ${
+                      scanMode === 'checkin' 
+                        ? 'bg-green-500 hover:bg-green-600' 
+                        : 'bg-red-500 hover:bg-red-600'
+                    }`}
                   >
                     <Camera className="h-4 w-4 mr-2" />
-                    Scanner starten
+                    {scanMode === 'checkin' ? 'Check-in Scanner starten' : 'Check-out Scanner starten'}
                   </Button>
                 ) : (
                   <Button 
@@ -207,11 +275,19 @@ const Scanner = () => {
 
           <div className="space-y-6">
             {lastScanned && (
-              <Card className="backdrop-blur-sm bg-green-500/20 border-green-400/30">
+              <Card className={`backdrop-blur-sm border-opacity-30 ${
+                lastScanned.action === 'checkin' 
+                  ? 'bg-green-500/20 border-green-400/30' 
+                  : 'bg-red-500/20 border-red-400/30'
+              }`}>
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5" />
-                    Zuletzt eingecheckt
+                    {lastScanned.action === 'checkin' ? (
+                      <CheckCircle className="h-5 w-5" />
+                    ) : (
+                      <X className="h-5 w-5" />
+                    )}
+                    {lastScanned.action === 'checkin' ? 'Zuletzt eingecheckt' : 'Zuletzt ausgecheckt'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

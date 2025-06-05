@@ -75,6 +75,19 @@ class GuestService {
     return response.json();
   }
 
+  async checkOutGuest(guestId: string): Promise<void> {
+    const response = await fetch(apiUrl(`${API_CONFIG.ENDPOINTS.CHECKINS}/${guestId}`), {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('Guest not checked in');
+      }
+      throw new Error('Failed to check out guest');
+    }
+  }
+
   async getCheckedInGuests(): Promise<CheckedInGuest[]> {
     const response = await fetch(apiUrl(API_CONFIG.ENDPOINTS.CHECKINS));
     

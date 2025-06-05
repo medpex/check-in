@@ -71,3 +71,23 @@ export const useCheckInGuest = () => {
     },
   });
 };
+
+export const useCheckOutGuest = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (guestId: string) => guestService.checkOutGuest(guestId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['checkedInGuests'] });
+      toast.success('Gast erfolgreich ausgecheckt!');
+    },
+    onError: (error) => {
+      if (error.message === 'Guest not checked in') {
+        toast.warning('Gast ist nicht eingecheckt!');
+      } else {
+        console.error('Error checking out guest:', error);
+        toast.error('Fehler beim Auschecken');
+      }
+    },
+  });
+};
