@@ -33,10 +33,12 @@ export const VideoScanner = ({
     const now = Date.now();
     const timeSinceLastScan = now - lastScannedTimeRef.current;
     
+    // Verhindere doppelte Scans desselben Codes innerhalb von 3 Sekunden
     if (data === lastScannedCodeRef.current && timeSinceLastScan < 3000) {
       return;
     }
 
+    // Verhindere neue Scans während der Verarbeitung
     if (isProcessing) {
       return;
     }
@@ -79,6 +81,7 @@ export const VideoScanner = ({
     }
     setIsScanning(false);
     setIsProcessing(false);
+    // Zurücksetzen der Scan-Historie beim Stoppen
     lastScannedCodeRef.current = "";
     lastScannedTimeRef.current = 0;
     toast.info("Scanner gestoppt");
