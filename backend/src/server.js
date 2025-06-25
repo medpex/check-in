@@ -6,6 +6,7 @@ require('dotenv').config();
 
 const guestRoutes = require('./routes/guests');
 const checkinRoutes = require('./routes/checkins');
+const businessEmailRoutes = require('./routes/businessEmails');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -50,6 +51,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/guests', guestRoutes);
 app.use('/api/checkins', checkinRoutes);
+app.use('/api/business-emails', businessEmailRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

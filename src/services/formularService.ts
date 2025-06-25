@@ -1,5 +1,6 @@
 
 import { apiUrl } from '@/config/api';
+import { businessEmailService } from './businessEmailService';
 
 export interface EmailVerificationRequest {
   businessEmail: string;
@@ -27,13 +28,14 @@ export interface GuestResponse {
 }
 
 class FormularService {
-  // Mock email verification - in production würde hier gegen eine Datenbank geprüft
   async verifyBusinessEmail(request: EmailVerificationRequest): Promise<boolean> {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Simple validation - in production würde hier eine echte Validierung stattfinden
-    return request.businessEmail.includes('@') && request.businessEmail.length > 5;
+    try {
+      const result = await businessEmailService.verifyBusinessEmail(request.businessEmail);
+      return result.verified;
+    } catch (error) {
+      console.error('Email verification error:', error);
+      throw error;
+    }
   }
 
   async registerMainGuest(request: GuestRegistrationRequest): Promise<GuestResponse> {

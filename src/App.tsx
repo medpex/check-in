@@ -10,6 +10,7 @@ import ScannerIn from "./pages/ScannerIn";
 import ScannerOut from "./pages/ScannerOut";
 import Guests from "./pages/Guests";
 import Formular from "./pages/Formular";
+import BusinessEmails from "./pages/BusinessEmails";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/scanner-out" element={<ScannerOut />} />
           <Route path="/guests" element={<Guests />} />
           <Route path="/formular" element={<Formular />} />
+          <Route path="/business-emails" element={<BusinessEmails />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

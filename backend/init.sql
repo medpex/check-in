@@ -1,35 +1,44 @@
 
--- QR Scanner Party App Database Schema
+-- Datenbank-Schema für QR Scanner Party App
 
--- Create database (this will be done by docker-compose, but kept for reference)
--- CREATE DATABASE qr_scanner_db;
-
--- Create guests table
+-- Gäste-Tabelle
 CREATE TABLE IF NOT EXISTS guests (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
-  email VARCHAR(255),
-  qr_code TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    qr_code TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create checkins table
+-- Check-ins Tabelle
 CREATE TABLE IF NOT EXISTS checkins (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  guest_id UUID REFERENCES guests(id) ON DELETE CASCADE,
-  name VARCHAR(255) NOT NULL,
-  timestamp TIMESTAMP NOT NULL,
-  UNIQUE(guest_id)
+    id SERIAL PRIMARY KEY,
+    guest_id UUID NOT NULL,
+    guest_name VARCHAR(255) NOT NULL,
+    checked_in_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    checked_out_at TIMESTAMP,
+    FOREIGN KEY (guest_id) REFERENCES guests(id) ON DELETE CASCADE
 );
 
--- Create indexes for better performance
+-- Berechtigte Geschäftsemails Tabelle
+CREATE TABLE IF NOT EXISTS business_emails (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    company VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indizes für bessere Performance
 CREATE INDEX IF NOT EXISTS idx_guests_email ON guests(email);
 CREATE INDEX IF NOT EXISTS idx_checkins_guest_id ON checkins(guest_id);
-CREATE INDEX IF NOT EXISTS idx_checkins_timestamp ON checkins(timestamp);
+CREATE INDEX IF NOT EXISTS idx_checkins_checked_in_at ON checkins(checked_in_at);
+CREATE INDEX IF NOT EXISTS idx_business_emails_email ON business_emails(email);
 
--- Insert some sample data
-INSERT INTO guests (id, name, email, qr_code) VALUES 
-  ('550e8400-e29b-41d4-a716-446655440001', 'Max Mustermann', 'max@example.com', '{"id":"550e8400-e29b-41d4-a716-446655440001","name":"Max Mustermann"}'),
-  ('550e8400-e29b-41d4-a716-446655440002', 'Anna Schmidt', 'anna@example.com', '{"id":"550e8400-e29b-41d4-a716-446655440002","name":"Anna Schmidt"}'),
-  ('550e8400-e29b-41d4-a716-446655440003', 'Peter Weber', 'peter@example.com', '{"id":"550e8400-e29b-41d4-a716-446655440003","name":"Peter Weber"}')
-ON CONFLICT (id) DO NOTHING;
+-- Beispiel-Daten für berechtigte Geschäftsemails (optional)
+INSERT INTO business_emails (email, company) VALUES 
+    ('admin@example.com', 'Beispiel GmbH'),
+    ('hr@company.com', 'Firma AG')
+ON CONFLICT (email) DO NOTHING;
+
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO qr_scanner_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO qr_scanner_user;

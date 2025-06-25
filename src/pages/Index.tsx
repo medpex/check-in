@@ -1,6 +1,6 @@
 
+import { QrCode, UserPlus, Users, ScanLine, Building, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Users, PartyPopper, CheckCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -9,90 +9,136 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700">
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <PartyPopper className="h-12 w-12 text-white" />
-            <h1 className="text-5xl font-bold text-white">Party Check-in</h1>
-          </div>
-          <p className="text-xl text-white/90 max-w-2xl mx-auto">
-            Scanne QR-Code Einladungen und verwalte deine Gästeliste digital
+          <h1 className="text-4xl font-bold text-white mb-4">
+            QR Code Feier Check-in
+          </h1>
+          <p className="text-xl text-white/80">
+            Digitale Gästeverwaltung für deine Veranstaltung
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
-          <Card className="backdrop-blur-sm bg-green-500/20 border-green-400/30 hover:bg-green-500/30 transition-all duration-300 hover:scale-105">
-            <CardHeader className="text-center">
-              <CheckCircle className="h-12 w-12 text-white mx-auto mb-2" />
-              <CardTitle className="text-white">Check-In</CardTitle>
-              <CardDescription className="text-white/80">
-                Scanner für Gäste-Einlass
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {/* Admin-Funktionen */}
+          <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Mail className="h-6 w-6" />
+                Geschäftsemails
+              </CardTitle>
+              <CardDescription className="text-white/70">
+                Berechtigte Geschäftsemails verwalten
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link to="/scanner-in">
-                <Button className="w-full bg-green-500 hover:bg-green-600 text-white">
-                  Check-In öffnen
+              <Link to="/business-emails">
+                <Button className="w-full bg-white/20 hover:bg-white/30 text-white">
+                  Verwalten
                 </Button>
               </Link>
             </CardContent>
           </Card>
 
-          <Card className="backdrop-blur-sm bg-red-500/20 border-red-400/30 hover:bg-red-500/30 transition-all duration-300 hover:scale-105">
-            <CardHeader className="text-center">
-              <X className="h-12 w-12 text-white mx-auto mb-2" />
-              <CardTitle className="text-white">Check-Out</CardTitle>
-              <CardDescription className="text-white/80">
-                Scanner für Gäste-Ausgang
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/scanner-out">
-                <Button className="w-full bg-red-500 hover:bg-red-600 text-white">
-                  Check-Out öffnen
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/30 transition-all duration-300 hover:scale-105">
-            <CardHeader className="text-center">
-              <Users className="h-12 w-12 text-white mx-auto mb-2" />
-              <CardTitle className="text-white">Gästeliste</CardTitle>
-              <CardDescription className="text-white/80">
-                Übersicht über alle Gäste und deren Check-in Status
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/guests">
-                <Button className="w-full bg-white/20 hover:bg-white/30 text-white border-white/30">
-                  Gästeliste anzeigen
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/30 transition-all duration-300 hover:scale-105">
-            <CardHeader className="text-center">
-              <PartyPopper className="h-12 w-12 text-white mx-auto mb-2" />
-              <CardTitle className="text-white">Einladungen</CardTitle>
-              <CardDescription className="text-white/80">
-                Neue Gäste einladen und QR-Codes erstellen
+          <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <QrCode className="h-6 w-6" />
+                Einladungen
+              </CardTitle>
+              <CardDescription className="text-white/70">
+                QR-Codes für Gäste erstellen
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Link to="/invitations">
-                <Button className="w-full bg-white/20 hover:bg-white/30 text-white border-white/30">
-                  Einladungen verwalten
+                <Button className="w-full bg-white/20 hover:bg-white/30 text-white">
+                  Erstellen
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Users className="h-6 w-6" />
+                Gäste
+              </CardTitle>
+              <CardDescription className="text-white/70">
+                Alle Gäste anzeigen und verwalten
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/guests">
+                <Button className="w-full bg-white/20 hover:bg-white/30 text-white">
+                  Anzeigen
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Scanner-Funktionen */}
+          <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <ScanLine className="h-6 w-6" />
+                Scanner Eingang
+              </CardTitle>
+              <CardDescription className="text-white/70">
+                Gäste beim Eingang einchecken
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/scanner-in">
+                <Button className="w-full bg-green-600/60 hover:bg-green-600/70 text-white">
+                  Check-In
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <ScanLine className="h-6 w-6" />
+                Scanner Ausgang
+              </CardTitle>
+              <CardDescription className="text-white/70">
+                Gäste beim Ausgang auschecken
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/scanner-out">
+                <Button className="w-full bg-red-600/60 hover:bg-red-600/70 text-white">
+                  Check-Out
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Gast-Registrierung */}
+          <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <UserPlus className="h-6 w-6" />
+                Gast-Registrierung
+              </CardTitle>
+              <CardDescription className="text-white/70">
+                Für eingeladene Gäste
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/formular">
+                <Button className="w-full bg-blue-600/60 hover:bg-blue-600/70 text-white">
+                  Registrieren
                 </Button>
               </Link>
             </CardContent>
           </Card>
         </div>
 
-        <div className="text-center mt-12">
-          <p className="text-white/70 text-sm">
-            Einfach • Schnell • Zuverlässig
-          </p>
-        </div>
+        <footer className="mt-16 text-center">
+          <p className="text-white/70">© Jakob Ejne 2025</p>
+        </footer>
       </div>
     </div>
   );
