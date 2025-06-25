@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, QrCode, Users, UserPlus, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,19 +18,13 @@ interface GuestRegistrationForm {
   privateEmail: string;
 }
 
-interface AdditionalGuest {
-  name: string;
-  email: string;
-  qrCode?: string;
-}
-
 const Formular = () => {
   const [emailVerified, setEmailVerified] = useState(false);
   const [verifiedBusinessEmail, setVerifiedBusinessEmail] = useState("");
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [mainGuest, setMainGuest] = useState<GuestResponse | null>(null);
   const [guestType, setGuestType] = useState<"family" | "friends" | null>(null);
-  const [additionalGuests, setAdditionalGuests] = useState<AdditionalGuest[]>([]);
+  const [additionalGuests, setAdditionalGuests] = useState<GuestResponse[]>([]);
   const [newGuestName, setNewGuestName] = useState("");
   const [newGuestEmail, setNewGuestEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -47,6 +41,25 @@ const Formular = () => {
       privateEmail: "",
     },
   });
+
+  // Lade zusätzliche Gäste wenn guestType gewählt wird
+  useEffect(() => {
+    if (mainGuest && guestType) {
+      loadAdditionalGuests();
+    }
+  }, [mainGuest, guestType]);
+
+  const loadAdditionalGuests = async () => {
+    if (!mainGuest || !guestType) return;
+
+    try {
+      const guests = await formularService.getAdditionalGuests(mainGuest.id, guestType);
+      setAdditionalGuests(guests);
+    } catch (error) {
+      console.error("Error loading additional guests:", error);
+      toast.error("Fehler beim Laden der zusätzlichen Gäste");
+    }
+  };
 
   const onEmailVerification = async (data: EmailVerificationForm) => {
     try {
@@ -118,11 +131,7 @@ const Formular = () => {
         guestType: guestType!,
       });
 
-      setAdditionalGuests([...additionalGuests, { 
-        name: newGuestName, 
-        email: newGuestEmail,
-        qrCode: additionalGuestResponse.qr_code 
-      }]);
+      setAdditionalGuests([...additionalGuests, additionalGuestResponse]);
       setNewGuestName("");
       setNewGuestEmail("");
       toast.success(`${guestType === "family" ? "Familienmitglied" : "Freund"} hinzugefügt und QR Code erstellt`);
@@ -134,8 +143,9 @@ const Formular = () => {
     }
   };
 
-  const removeAdditionalGuest = (index: number) => {
-    setAdditionalGuests(additionalGuests.filter((_, i) => i !== index));
+  const removeAdditionalGuest = (guestId: string) => {
+    setAdditionalGuests(additionalGuests.filter(guest => guest.id !== guestId));
+    // TODO: Implement backend deletion if needed
   };
 
   const selectGuestType = (type: "family" | "friends") => {
@@ -431,8 +441,8 @@ const Formular = () => {
                     <h4 className="text-white font-medium">
                       Hinzugefügte {guestType === "family" ? "Familienmitglieder" : "Freunde"}:
                     </h4>
-                    {additionalGuests.map((guest, index) => (
-                      <div key={index} className="bg-white/10 p-3 rounded space-y-2">
+                    {additionalGuests.map((guest) => (
+                      <div key={guest.id} className="bg-white/10 p-3 rounded space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="text-white text-sm">
                             <div>{guest.name}</div>
@@ -441,16 +451,16 @@ const Formular = () => {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => removeAdditionalGuest(index)}
+                            onClick={() => removeAdditionalGuest(guest.id)}
                             className="bg-red-500/20 hover:bg-red-500/30"
                           >
                             Entfernen
                           </Button>
                         </div>
-                        {guest.qrCode && (
+                        {guest.qr_code && (
                           <div className="bg-white p-2 rounded">
                             <img 
-                              src={guest.qrCode} 
+                              src={guest.qr_code} 
                               alt={`QR Code für ${guest.name}`}
                               className="w-full max-w-[100px] mx-auto"
                             />

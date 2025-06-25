@@ -6,12 +6,35 @@ const pool = require('../config/database');
 
 const router = express.Router();
 
-// GET /api/guests - Alle Gäste abrufen
+// GET /api/guests - Alle Gäste abrufen (mit optionalen Filtern)
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT id, name, email, qr_code, created_at FROM guests ORDER BY created_at DESC'
-    );
+    const { main_guest_id, guest_type } = req.query;
+    
+    let query = 'SELECT id, name, email, qr_code, main_guest_id, guest_type, created_at FROM guests';
+    let params = [];
+    let conditions = [];
+    
+    // Filter nach main_guest_id
+    if (main_guest_id) {
+      conditions.push('main_guest_id = $' + (params.length + 1));
+      params.push(main_guest_id);
+    }
+    
+    // Filter nach guest_type
+    if (guest_type) {
+      conditions.push('guest_type = $' + (params.length + 1));
+      params.push(guest_type);
+    }
+    
+    // Füge WHERE-Klausel hinzu, wenn Filter vorhanden sind
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+    
+    query += ' ORDER BY created_at DESC';
+    
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error('Fehler beim Abrufen der Gäste:', error);
@@ -22,10 +45,23 @@ router.get('/', async (req, res) => {
 // POST /api/guests - Neuen Gast erstellen
 router.post('/', async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, main_guest_id, guest_type } = req.body;
 
     if (!name || name.trim() === '') {
       return res.status(400).json({ error: 'Name ist erforderlich' });
+    }
+
+    // Validiere guest_type falls vorhanden
+    if (guest_type && !['family', 'friends'].includes(guest_type)) {
+      return res.status(400).json({ error: 'Ungültiger guest_type. Erlaubt: family, friends' });
+    }
+
+    // Wenn main_guest_id angegeben ist, prüfe ob der Hauptgast existiert
+    if (main_guest_id) {
+      const mainGuestCheck = await pool.query('SELECT id FROM guests WHERE id = $1', [main_guest_id]);
+      if (mainGuestCheck.rows.length === 0) {
+        return res.status(400).json({ error: 'Hauptgast nicht gefunden' });
+      }
     }
 
     const guestId = uuidv4();
@@ -48,11 +84,11 @@ router.post('/', async (req, res) => {
 
     // Gast in Datenbank speichern
     const result = await pool.query(
-      'INSERT INTO guests (id, name, email, qr_code) VALUES ($1, $2, $3, $4) RETURNING *',
-      [guestId, name.trim(), email || null, qrCodeDataUrl]
+      'INSERT INTO guests (id, name, email, qr_code, main_guest_id, guest_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [guestId, name.trim(), email || null, qrCodeDataUrl, main_guest_id || null, guest_type || null]
     );
 
-    console.log(`✅ Neuer Gast erstellt: ${name} (${guestId})`);
+    console.log(`✅ Neuer Gast erstellt: ${name} (${guestId})${main_guest_id ? ` - Zusatzgast für ${main_guest_id}` : ''}`);
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Fehler beim Erstellen des Gastes:', error);
@@ -74,7 +110,7 @@ router.delete('/:id', async (req, res) => {
 
     const guestName = checkResult.rows[0].name;
 
-    // Gast löschen (CASCADE löscht auch Check-ins)
+    // Gast löschen (CASCADE löscht auch Check-ins und zusätzliche Gäste)
     await pool.query('DELETE FROM guests WHERE id = $1', [id]);
 
     console.log(`🗑️ Gast gelöscht: ${guestName} (${id})`);

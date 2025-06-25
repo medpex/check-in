@@ -24,6 +24,8 @@ export interface GuestResponse {
   name: string;
   email: string;
   qr_code: string;
+  main_guest_id?: string;
+  guest_type?: 'family' | 'friends';
   created_at: string;
 }
 
@@ -66,8 +68,25 @@ class FormularService {
       body: JSON.stringify({
         name: request.name,
         email: request.email,
+        main_guest_id: request.mainGuestId,
+        guest_type: request.guestType,
       }),
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async getAdditionalGuests(mainGuestId: string, guestType: 'family' | 'friends'): Promise<GuestResponse[]> {
+    const params = new URLSearchParams({
+      main_guest_id: mainGuestId,
+      guest_type: guestType,
+    });
+
+    const response = await fetch(apiUrl(`/guests?${params.toString()}`));
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

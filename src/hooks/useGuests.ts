@@ -1,12 +1,12 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { guestService, Guest, CheckedInGuest } from '@/services/guestService';
+import { guestService, Guest, CheckedInGuest, GetGuestsParams } from '@/services/guestService';
 import { toast } from 'sonner';
 
-export const useGuests = () => {
+export const useGuests = (params?: GetGuestsParams) => {
   return useQuery({
-    queryKey: ['guests'],
-    queryFn: () => guestService.getAllGuests(),
+    queryKey: ['guests', params],
+    queryFn: () => guestService.getAllGuests(params),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
@@ -23,7 +23,12 @@ export const useCreateGuest = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ name, email }: { name: string; email: string }) => guestService.createGuest(name, email),
+    mutationFn: ({ name, email, mainGuestId, guestType }: { 
+      name: string; 
+      email: string; 
+      mainGuestId?: string; 
+      guestType?: 'family' | 'friends' 
+    }) => guestService.createGuest(name, email, mainGuestId, guestType),
     onSuccess: (newGuest) => {
       queryClient.invalidateQueries({ queryKey: ['guests'] });
       toast.success(`Einladung für ${newGuest.name} erstellt!`);

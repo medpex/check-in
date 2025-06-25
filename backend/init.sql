@@ -7,7 +7,10 @@ CREATE TABLE IF NOT EXISTS guests (
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255),
     qr_code TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    main_guest_id UUID,
+    guest_type VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (main_guest_id) REFERENCES guests(id) ON DELETE CASCADE
 );
 
 -- Check-ins Tabelle
@@ -30,6 +33,8 @@ CREATE TABLE IF NOT EXISTS business_emails (
 
 -- Indizes für bessere Performance
 CREATE INDEX IF NOT EXISTS idx_guests_email ON guests(email);
+CREATE INDEX IF NOT EXISTS idx_guests_main_guest_id ON guests(main_guest_id);
+CREATE INDEX IF NOT EXISTS idx_guests_guest_type ON guests(guest_type);
 CREATE INDEX IF NOT EXISTS idx_checkins_guest_id ON checkins(guest_id);
 CREATE INDEX IF NOT EXISTS idx_checkins_checked_in_at ON checkins(checked_in_at);
 CREATE INDEX IF NOT EXISTS idx_business_emails_email ON business_emails(email);

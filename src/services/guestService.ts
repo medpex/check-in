@@ -6,6 +6,8 @@ export interface Guest {
   name: string;
   email?: string;
   qr_code: string;
+  main_guest_id?: string;
+  guest_type?: 'family' | 'friends';
   created_at?: string;
 }
 
@@ -16,14 +18,24 @@ export interface CheckedInGuest {
   timestamp: string;
 }
 
+export interface GetGuestsParams {
+  main_guest_id?: string;
+  guest_type?: 'family' | 'friends';
+}
+
 class GuestService {
-  async createGuest(name: string, email?: string): Promise<Guest> {
+  async createGuest(name: string, email?: string, mainGuestId?: string, guestType?: 'family' | 'friends'): Promise<Guest> {
     const response = await fetch(apiUrl(API_CONFIG.ENDPOINTS.GUESTS), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name, email }),
+      body: JSON.stringify({ 
+        name, 
+        email, 
+        main_guest_id: mainGuestId,
+        guest_type: guestType
+      }),
     });
 
     if (!response.ok) {
@@ -33,8 +45,22 @@ class GuestService {
     return response.json();
   }
 
-  async getAllGuests(): Promise<Guest[]> {
-    const response = await fetch(apiUrl(API_CONFIG.ENDPOINTS.GUESTS));
+  async getAllGuests(params?: GetGuestsParams): Promise<Guest[]> {
+    let url = apiUrl(API_CONFIG.ENDPOINTS.GUESTS);
+    
+    // Add query parameters if provided
+    if (params && (params.main_guest_id || params.guest_type)) {
+      const searchParams = new URLSearchParams();
+      if (params.main_guest_id) {
+        searchParams.append('main_guest_id', params.main_guest_id);
+      }
+      if (params.guest_type) {
+        searchParams.append('guest_type', params.guest_type);
+      }
+      url += `?${searchParams.toString()}`;
+    }
+    
+    const response = await fetch(url);
     
     if (!response.ok) {
       throw new Error('Failed to fetch guests');
