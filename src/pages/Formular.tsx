@@ -1,7 +1,5 @@
-
 import { useState } from "react";
-import { ArrowLeft, Mail, QrCode, Users, UserPlus, CheckCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Mail, QrCode, Users, UserPlus, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -130,12 +128,7 @@ const Formular = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700 flex flex-col">
         <div className="flex-1">
           <div className="container mx-auto px-4 py-8">
-            <div className="flex items-center gap-4 mb-8">
-              <Link to="/">
-                <Button variant="outline" size="icon" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-              </Link>
+            <div className="flex items-center justify-center gap-4 mb-8">
               <h1 className="text-3xl font-bold text-white flex items-center gap-2">
                 <Mail className="h-8 w-8" />
                 Email Verifizierung
@@ -208,12 +201,7 @@ const Formular = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700 flex flex-col">
         <div className="flex-1">
           <div className="container mx-auto px-4 py-8">
-            <div className="flex items-center gap-4 mb-8">
-              <Link to="/">
-                <Button variant="outline" size="icon" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-              </Link>
+            <div className="flex items-center justify-center gap-4 mb-8">
               <h1 className="text-3xl font-bold text-white flex items-center gap-2">
                 <UserPlus className="h-8 w-8" />
                 Gast Registrierung
@@ -309,12 +297,7 @@ const Formular = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700 flex flex-col">
       <div className="flex-1">
         <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center gap-4 mb-8">
-            <Link to="/">
-              <Button variant="outline" size="icon" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
+          <div className="flex items-center justify-center gap-4 mb-8">
             <h1 className="text-3xl font-bold text-white flex items-center gap-2">
               <QrCode className="h-8 w-8" />
               Registrierung Abgeschlossen
