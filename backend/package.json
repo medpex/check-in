@@ -1,0 +1,28 @@
+
+{
+  "name": "qr-scanner-party-backend",
+  "version": "1.0.0",
+  "description": "Backend API für QR-Scanner Party App",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "migrate": "node src/scripts/migrate.js",
+    "seed": "node src/scripts/seed.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "pg": "^8.11.3",
+    "qrcode": "^1.5.4",
+    "uuid": "^9.0.1",
+    "dotenv": "^16.3.1",
+    "helmet": "^7.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": ["qr-scanner", "party", "events", "check-in"],
+  "author": "Your Name",
+  "license": "MIT"
+}

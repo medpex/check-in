@@ -1,0 +1,47 @@
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: qr_scanner_db
+      POSTGRES_USER: qr_scanner_user
+      POSTGRES_PASSWORD: secure_password_123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qr_scanner_user -d qr_scanner_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  api:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://qr_scanner_user:secure_password_123@postgres:5432/qr_scanner_db
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: qr_scanner_db
+      DB_USER: qr_scanner_user
+      DB_PASSWORD: secure_password_123
+      PORT: 3001
+      CORS_ORIGIN: http://localhost:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./package.json:/app/package.json
+    command: npm run dev
+
+volumes:
+  postgres_data:
