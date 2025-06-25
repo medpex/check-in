@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { ArrowLeft, Download, QrCode, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Download, QrCode, Plus, Trash2, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +36,11 @@ const Invitations = () => {
     link.download = `einladung-${guest.name}.png`;
     link.href = guest.qr_code;
     link.click();
+  };
+
+  const sendEmail = (guest: any) => {
+    // Placeholder für E-Mail Versendung
+    toast.success(`E-Mail an ${guest.name} wird gesendet...`);
   };
 
   if (error) {
@@ -128,6 +132,13 @@ const Invitations = () => {
                       className="w-full max-w-[200px] mx-auto"
                     />
                   </div>
+                  <Button 
+                    onClick={() => sendEmail(guest)}
+                    className="w-full bg-white/20 hover:bg-white/30 text-white mb-2"
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    E-Mail senden
+                  </Button>
                   <div className="flex gap-2">
                     <Button 
                       onClick={() => downloadQRCode(guest)}
