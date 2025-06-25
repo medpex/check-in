@@ -5,39 +5,42 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
-interface CSVImportProps {
-  onImport: (guests: { name: string; email: string }[]) => void;
+interface BusinessEmailCSVImportProps {
+  onImport: (emails: { email: string; company?: string }[]) => void;
   isImporting: boolean;
 }
 
-const CSVImport = ({ onImport, isImporting }: CSVImportProps) => {
+const BusinessEmailCSVImport = ({ onImport, isImporting }: BusinessEmailCSVImportProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const parseCSV = (csvText: string): { name: string; email: string }[] => {
+  const parseCSV = (csvText: string): { email: string; company?: string }[] => {
     const lines = csvText.trim().split('\n');
-    const guests: { name: string; email: string }[] = [];
+    const emails: { email: string; company?: string }[] = [];
     
     // Skip header row if it exists
-    const dataLines = lines[0].toLowerCase().includes('name') || lines[0].toLowerCase().includes('email') 
+    const dataLines = lines[0].toLowerCase().includes('email') || lines[0].toLowerCase().includes('company') 
       ? lines.slice(1) 
       : lines;
 
     for (const line of dataLines) {
-      const [name, email] = line.split(',').map(field => field.trim().replace(/^"|"$/g, ''));
+      const [email, company] = line.split(',').map(field => field.trim().replace(/^"|"$/g, ''));
       
-      if (name && email) {
+      if (email) {
         // Basic email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (emailRegex.test(email)) {
-          guests.push({ name, email });
+          emails.push({ 
+            email, 
+            company: company && company.trim() !== '' ? company : undefined 
+          });
         } else {
           console.warn(`Invalid email format: ${email}`);
         }
       }
     }
     
-    return guests;
+    return emails;
   };
 
   const handleFileUpload = (file: File) => {
@@ -50,15 +53,15 @@ const CSVImport = ({ onImport, isImporting }: CSVImportProps) => {
     reader.onload = (e) => {
       try {
         const csvText = e.target?.result as string;
-        const guests = parseCSV(csvText);
+        const emails = parseCSV(csvText);
         
-        if (guests.length === 0) {
-          toast.error('Keine gültigen Gästedaten in der CSV-Datei gefunden');
+        if (emails.length === 0) {
+          toast.error('Keine gültigen Email-Daten in der CSV-Datei gefunden');
           return;
         }
         
-        onImport(guests);
-        toast.success(`${guests.length} Gäste aus CSV importiert`);
+        onImport(emails);
+        toast.success(`${emails.length} Geschäftsemails aus CSV importiert`);
       } catch (error) {
         console.error('Error parsing CSV:', error);
         toast.error('Fehler beim Lesen der CSV-Datei');
@@ -90,7 +93,7 @@ const CSVImport = ({ onImport, isImporting }: CSVImportProps) => {
       <CardHeader>
         <CardTitle className="text-white flex items-center gap-2">
           <Upload className="h-5 w-5" />
-          CSV Import
+          CSV Import für Geschäftsemails
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -109,7 +112,7 @@ const CSVImport = ({ onImport, isImporting }: CSVImportProps) => {
         >
           <FileText className="h-12 w-12 text-white/50 mx-auto mb-4" />
           <p className="text-white/70 mb-2">
-            CSV-Datei hier ablegen oder klicken zum Auswählen
+            CSV-Datei mit Geschäftsemails hier ablegen oder klicken zum Auswählen
           </p>
           <Button
             onClick={() => fileInputRef.current?.click()}
@@ -138,13 +141,14 @@ const CSVImport = ({ onImport, isImporting }: CSVImportProps) => {
                 Die CSV-Datei sollte folgendes Format haben:
               </p>
               <div className="bg-black/20 rounded p-2 font-mono text-sm text-white/80">
-                Name,Email<br />
-                Max Mustermann,max@example.com<br />
-                Anna Schmidt,anna@example.com
+                Email,Company<br />
+                kontakt@firma1.com,Firma 1<br />
+                info@firma2.com,Firma 2
               </div>
               <p className="text-white/60 text-xs mt-2">
                 • Erste Zeile kann Überschriften enthalten (optional)<br />
                 • Komma als Trennzeichen<br />
+                • Company-Spalte ist optional<br />
                 • Anführungszeichen um Felder sind optional
               </p>
             </div>
@@ -155,4 +159,4 @@ const CSVImport = ({ onImport, isImporting }: CSVImportProps) => {
   );
 };
 
-export default CSVImport;
+export default BusinessEmailCSVImport;

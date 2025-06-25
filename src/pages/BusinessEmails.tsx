@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBusinessEmails, useAddBusinessEmail, useDeleteBusinessEmail } from "@/hooks/useBusinessEmails";
 import { testApiConnection } from "@/config/api";
 import { toast } from "sonner";
+import BusinessEmailCSVImport from "@/components/BusinessEmailCSVImport";
 
 const BusinessEmails = () => {
   const [newEmail, setNewEmail] = useState("");
@@ -14,6 +15,8 @@ const BusinessEmails = () => {
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'connected' | 'failed'>('unknown');
   const [lastConnectionTest, setLastConnectionTest] = useState<number>(0);
+  const [isImportingCSV, setIsImportingCSV] = useState(false);
+  const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
   
   const { data: businessEmails = [], isLoading, error, refetch } = useBusinessEmails();
   const addEmailMutation = useAddBusinessEmail();
@@ -69,6 +72,73 @@ const BusinessEmails = () => {
         toast.success('Geschäftsemail erfolgreich hinzugefügt');
       }
     });
+  };
+
+  const handleCSVImport = async (csvEmails: { email: string; company?: string }[]) => {
+    setIsImportingCSV(true);
+    setImportProgress({ current: 0, total: csvEmails.length });
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    try {
+      console.log(`📊 Starte CSV-Import für ${csvEmails.length} Geschäftsemails...`);
+      
+      for (let i = 0; i < csvEmails.length; i++) {
+        const emailData = csvEmails[i];
+        setImportProgress({ current: i + 1, total: csvEmails.length });
+        
+        try {
+          console.log(`⏳ Erstelle Geschäftsemail ${i + 1}/${csvEmails.length}: ${emailData.email}`);
+          
+          await new Promise((resolve, reject) => {
+            addEmailMutation.mutate(
+              { email: emailData.email, company: emailData.company },
+              {
+                onSuccess: () => {
+                  successCount++;
+                  console.log(`✅ Geschäftsemail erfolgreich erstellt: ${emailData.email}`);
+                  resolve(undefined);
+                },
+                onError: (error) => {
+                  errorCount++;
+                  console.error(`❌ Fehler beim Erstellen von ${emailData.email}:`, error);
+                  reject(error);
+                }
+              }
+            );
+          });
+          
+          // 1 Sekunde Verzögerung zwischen den Requests
+          if (i < csvEmails.length - 1) {
+            console.log('⏸️ Warte 1 Sekunde vor nächster Email...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+          
+        } catch (error) {
+          console.error(`❌ Fehler beim Erstellen von Geschäftsemail ${emailData.email}:`, error);
+          // Weiter mit der nächsten Email, auch wenn eine fehlschlägt
+        }
+      }
+      
+      // Erfolgsbenachrichtigung
+      if (successCount > 0) {
+        toast.success(`${successCount} von ${csvEmails.length} Geschäftsemails erfolgreich importiert!`);
+      }
+      
+      if (errorCount > 0) {
+        toast.error(`${errorCount} Geschäftsemails konnten nicht importiert werden.`);
+      }
+      
+      console.log(`📈 CSV-Import abgeschlossen: ${successCount} erfolgreich, ${errorCount} Fehler`);
+      
+    } catch (error) {
+      console.error('❌ Schwerwiegender Fehler beim CSV-Import:', error);
+      toast.error('Fehler beim CSV-Import');
+    } finally {
+      setIsImportingCSV(false);
+      setImportProgress({ current: 0, total: 0 });
+    }
   };
 
   const removeBusinessEmail = (id: number) => {
@@ -165,6 +235,30 @@ const BusinessEmails = () => {
           </CardContent>
         </Card>
 
+        <BusinessEmailCSVImport 
+          onImport={handleCSVImport} 
+          isImporting={isImportingCSV || addEmailMutation.isPending}
+        />
+
+        {isImportingCSV && (
+          <Card className="backdrop-blur-sm bg-white/20 border-white/30 mb-8">
+            <CardContent className="pt-6">
+              <div className="text-center text-white">
+                <p className="mb-2">Importiere CSV-Daten...</p>
+                <p className="text-sm text-white/70">
+                  Email {importProgress.current} von {importProgress.total}
+                </p>
+                <div className="w-full bg-white/20 rounded-full h-2 mt-4">
+                  <div 
+                    className="bg-white h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Neue Email hinzufügen */}
         <Card className="backdrop-blur-sm bg-white/20 border-white/30 mb-8">
           <CardHeader>
@@ -179,20 +273,20 @@ const BusinessEmails = () => {
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
-                  disabled={addEmailMutation.isPending || connectionStatus === 'failed'}
+                  disabled={addEmailMutation.isPending || connectionStatus === 'failed' || isImportingCSV}
                 />
                 <Input
                   placeholder="Firmenname (optional)"
                   value={newCompany}
                   onChange={(e) => setNewCompany(e.target.value)}
                   className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
-                  disabled={addEmailMutation.isPending || connectionStatus === 'failed'}
+                  disabled={addEmailMutation.isPending || connectionStatus === 'failed' || isImportingCSV}
                 />
               </div>
               <Button 
                 onClick={addBusinessEmail} 
                 className="bg-white/20 hover:bg-white/30 text-white w-full"
-                disabled={addEmailMutation.isPending || !newEmail.trim() || connectionStatus === 'failed'}
+                disabled={addEmailMutation.isPending || !newEmail.trim() || connectionStatus === 'failed' || isImportingCSV}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 {addEmailMutation.isPending ? 'Hinzufügen...' : 'Hinzufügen'}
@@ -231,7 +325,7 @@ const BusinessEmails = () => {
                       variant="destructive"
                       size="sm"
                       className="bg-red-500/20 hover:bg-red-500/30"
-                      disabled={deleteEmailMutation.isPending || connectionStatus === 'failed'}
+                      disabled={deleteEmailMutation.isPending || connectionStatus === 'failed' || isImportingCSV}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
