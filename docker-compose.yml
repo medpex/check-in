@@ -38,8 +38,8 @@ services:
       DB_USER: qr_scanner_user
       DB_PASSWORD: secure_password_123
       PORT: 3001
-      # Dynamische CORS-Origin - unterstützt mehrere Origins
-      CORS_ORIGIN: "http://localhost:8080,http://10.0.0.61:8080,http://127.0.0.1:8080"
+      # CORS für Hetzner Domain erweitert
+      CORS_ORIGIN: "https://check-in.home-ki.eu,http://localhost:8080,http://10.0.0.61:8080,http://127.0.0.1:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,8 +64,8 @@ services:
       - /app/backend
     environment:
       - NODE_ENV=development
-      # Verwendet VITE_API_URL aus der .env Datei
-      - VITE_API_URL=${VITE_API_URL:-http://localhost:3001/api}
+      # Verwendet die neue HTTPS API-URL
+      - VITE_API_URL=${VITE_API_URL:-https://check-in.home-ki.eu/api}
     depends_on:
       - backend
     command: npm run dev
@@ -82,7 +82,7 @@ services:
       - "80:80"
     environment:
       - NODE_ENV=production
-      - VITE_API_URL=http://backend:3001/api
+      - VITE_API_URL=https://check-in.home-ki.eu/api
     depends_on:
       - backend
     profiles:
