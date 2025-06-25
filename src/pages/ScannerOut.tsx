@@ -35,12 +35,10 @@ const ScannerOut = () => {
           </h1>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Check-Out Scanner */}
-          <CheckOutScanner onScanResult={handleScanResult} />
-
-          {/* Last Scanned Status */}
-          <div className="space-y-6">
+        <div className="flex justify-center">
+          <div className="w-full max-w-md space-y-6">
+            <CheckOutScanner onScanResult={handleScanResult} />
+            
             {lastScanned && (
               <LastScannedCard lastScanned={lastScanned} />
             )}

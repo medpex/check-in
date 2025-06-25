@@ -35,12 +35,10 @@ const ScannerIn = () => {
           </h1>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Check-In Scanner */}
-          <CheckInScanner onScanResult={handleScanResult} />
-
-          {/* Last Scanned Status */}
-          <div className="space-y-6">
+        <div className="flex justify-center">
+          <div className="w-full max-w-md space-y-6">
+            <CheckInScanner onScanResult={handleScanResult} />
+            
             {lastScanned && (
               <LastScannedCard lastScanned={lastScanned} />
             )}
