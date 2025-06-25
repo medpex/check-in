@@ -5,8 +5,6 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CheckOutScanner } from "@/components/scanner/CheckOutScanner";
 import { LastScannedCard } from "@/components/scanner/LastScannedCard";
-import { CheckedInGuestsList } from "@/components/scanner/CheckedInGuestsList";
-import { useCheckedInGuests } from "@/hooks/useGuests";
 
 interface ScannedGuest {
   id: string;
@@ -17,7 +15,6 @@ interface ScannedGuest {
 
 const ScannerOut = () => {
   const [lastScanned, setLastScanned] = useState<ScannedGuest | null>(null);
-  const { data: checkedInGuests = [] } = useCheckedInGuests();
 
   const handleScanResult = (guest: ScannedGuest) => {
     setLastScanned(guest);
@@ -42,13 +39,11 @@ const ScannerOut = () => {
           {/* Check-Out Scanner */}
           <CheckOutScanner onScanResult={handleScanResult} />
 
-          {/* Status und Gästeliste */}
+          {/* Last Scanned Status */}
           <div className="space-y-6">
             {lastScanned && (
               <LastScannedCard lastScanned={lastScanned} />
             )}
-
-            <CheckedInGuestsList guests={checkedInGuests} />
           </div>
         </div>
       </div>

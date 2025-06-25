@@ -33,10 +33,12 @@ export const CheckOutScanner = ({ onScanResult }: CheckOutScannerProps) => {
     const now = Date.now();
     const timeSinceLastScan = now - lastScannedTimeRef.current;
     
-    if (data === lastScannedCodeRef.current && timeSinceLastScan < 3000) {
+    // Verhindere doppelte Scans desselben Codes innerhalb von 5 Sekunden
+    if (data === lastScannedCodeRef.current && timeSinceLastScan < 5000) {
       return;
     }
 
+    // Verhindere neue Scans während der Verarbeitung
     if (isProcessing) {
       return;
     }
@@ -50,7 +52,7 @@ export const CheckOutScanner = ({ onScanResult }: CheckOutScannerProps) => {
       
       if (!guestData.id || !guestData.name) {
         toast.error("Ungültiger QR-Code");
-        setIsProcessing(false);
+        setTimeout(() => setIsProcessing(false), 2000);
         return;
       }
 
@@ -59,7 +61,7 @@ export const CheckOutScanner = ({ onScanResult }: CheckOutScannerProps) => {
 
       if (!isCheckedIn) {
         toast.warning(`${guestData.name} ist nicht eingecheckt!`);
-        setIsProcessing(false);
+        setTimeout(() => setIsProcessing(false), 2000);
         return;
       }
 
@@ -80,7 +82,7 @@ export const CheckOutScanner = ({ onScanResult }: CheckOutScannerProps) => {
         onSettled: () => {
           setTimeout(() => {
             setIsProcessing(false);
-          }, 1000);
+          }, 2000);
         }
       });
       
@@ -89,7 +91,7 @@ export const CheckOutScanner = ({ onScanResult }: CheckOutScannerProps) => {
       toast.error("QR-Code konnte nicht verarbeitet werden");
       setTimeout(() => {
         setIsProcessing(false);
-      }, 1000);
+      }, 2000);
     }
   };
 
@@ -170,6 +172,7 @@ export const CheckOutScanner = ({ onScanResult }: CheckOutScannerProps) => {
           <Button 
             onClick={startScanning}
             className="w-full bg-red-500 hover:bg-red-600 text-white"
+            disabled={isProcessing}
           >
             <Camera className="h-4 w-4 mr-2" />
             Check-Out Scanner starten
