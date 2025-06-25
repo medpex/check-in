@@ -46,14 +46,14 @@ export const GuestTypeSelection = ({
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-white/70 text-center text-sm">
-            Möchten Sie weitere Personen anmelden? Wählen Sie eine Option:
+            Weitere Personen anmelden? Wählen Sie eine Option:
           </p>
           
-          {/* Zeige Info wenn bereits Gäste vorhanden sind */}
+          {/* Info wenn bereits Gäste vorhanden sind */}
           {(existingGuestTypes.hasFamily || existingGuestTypes.hasFriends) && (
             <div className="bg-blue-500/20 p-3 rounded text-center">
               <p className="text-white/80 text-sm">
-                Sie haben bereits {existingGuestTypes.hasFamily ? "Familienmitglieder" : "Freunde"} registriert.
+                Bereits {existingGuestTypes.hasFamily ? "Familie" : "Freunde"} registriert.
               </p>
             </div>
           )}
@@ -61,29 +61,33 @@ export const GuestTypeSelection = ({
           <div className="space-y-3">
             <Button 
               onClick={() => onGuestTypeSelect("family")}
-              className="w-full bg-white/20 hover:bg-white/30 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-white/20 hover:bg-white/30 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               disabled={existingGuestTypes.hasFriends}
             >
               <Users className="h-4 w-4 mr-2" />
-              Familienmitglieder (bis zu 10)
-              {existingGuestTypes.hasFriends && (
-                <span className="ml-2 text-xs">(nicht verfügbar - bereits Freunde registriert)</span>
-              )}
+              <div className="flex flex-col items-start">
+                <span>Familie (bis zu 10)</span>
+                {existingGuestTypes.hasFriends && (
+                  <span className="text-xs opacity-70">Bereits Freunde registriert</span>
+                )}
+              </div>
             </Button>
             <Button 
               onClick={() => onGuestTypeSelect("friends")}
-              className="w-full bg-white/20 hover:bg-white/30 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-white/20 hover:bg-white/30 text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               disabled={existingGuestTypes.hasFamily}
             >
               <UserPlus className="h-4 w-4 mr-2" />
-              Freunde (bis zu 2)
-              {existingGuestTypes.hasFamily && (
-                <span className="ml-2 text-xs">(nicht verfügbar - bereits Familie registriert)</span>
-              )}
+              <div className="flex flex-col items-start">
+                <span>Freunde (bis zu 2)</span>
+                {existingGuestTypes.hasFamily && (
+                  <span className="text-xs opacity-70">Bereits Familie registriert</span>
+                )}
+              </div>
             </Button>
           </div>
-          <p className="text-white/60 text-center text-xs">
-            Sie können entweder Familienmitglieder ODER Freunde hinzufügen, nicht beides.
+          <p className="text-white/60 text-center text-xs px-2">
+            Entweder Familie ODER Freunde - nicht beides möglich.
           </p>
         </CardContent>
       </Card>
@@ -95,7 +99,7 @@ export const GuestTypeSelection = ({
     <Card className="backdrop-blur-sm bg-white/20 border-white/30 max-w-md mx-auto">
       <CardHeader>
         <CardTitle className="text-white text-center">
-          {guestType === "family" ? "Familienmitglieder" : "Freunde"} hinzufügen
+          {guestType === "family" ? "Familie" : "Freunde"} hinzufügen
         </CardTitle>
         <p className="text-white/70 text-center text-sm">
           {additionalGuests.length} von {guestType === "family" ? "10" : "2"} hinzugefügt
@@ -122,7 +126,7 @@ export const GuestTypeSelection = ({
             disabled={additionalGuests.length >= (guestType === "family" ? 10 : 2) || isLoading}
           >
             <UserPlus className="h-4 w-4 mr-2" />
-            {isLoading ? "Wird hinzugefügt..." : `${guestType === "family" ? "Familienmitglied" : "Freund"} hinzufügen`}
+            {isLoading ? "Wird hinzugefügt..." : `${guestType === "family" ? "Familie" : "Freund"} hinzufügen`}
           </Button>
         </div>
 
@@ -130,7 +134,7 @@ export const GuestTypeSelection = ({
         {additionalGuests.length > 0 && (
           <div className="space-y-2">
             <h4 className="text-white font-medium">
-              Hinzugefügte {guestType === "family" ? "Familienmitglieder" : "Freunde"}:
+              {guestType === "family" ? "Familie" : "Freunde"}:
             </h4>
             {additionalGuests.map((guest) => (
               <div key={guest.id} className="bg-white/10 p-3 rounded space-y-2">
