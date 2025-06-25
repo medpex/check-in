@@ -38,14 +38,15 @@ services:
       DB_USER: qr_scanner_user
       DB_PASSWORD: secure_password_123
       PORT: 3001
-      CORS_ORIGIN: http://localhost:8080
+      # Dynamische CORS-Origin - unterstützt mehrere Origins
+      CORS_ORIGIN: "http://localhost:8080,http://10.0.0.61:8080,http://127.0.0.1:8080"
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
       - ./backend/src:/app/src
       - ./backend/package.json:/app/package.json
-    command: npm run dev
+    command: npm start
     networks:
       - qr-scanner-network
 
@@ -63,7 +64,8 @@ services:
       - /app/backend
     environment:
       - NODE_ENV=development
-      - VITE_API_URL=http://localhost:3001/api
+      # Verwendet VITE_API_URL aus der .env Datei
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:3001/api}
     depends_on:
       - backend
     command: npm run dev

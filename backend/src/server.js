@@ -10,17 +10,40 @@ const checkinRoutes = require('./routes/checkins');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// CORS-Origins aus Umgebungsvariable parsen
+const corsOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : ['http://localhost:8080'];
+
+console.log('🌐 Erlaubte CORS-Origins:', corsOrigins);
+
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:8080',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (corsOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Für Development: Alle localhost und 127.0.0.1 Origins erlauben
+    if (process.env.NODE_ENV === 'development' && 
+        (origin.includes('localhost') || origin.includes('127.0.0.1'))) {
+      return callback(null, true);
+    }
+    
+    console.warn('🚫 CORS-Fehler für Origin:', origin);
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 app.use(express.json());
 
 // Request logging
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.headers.origin || 'none'}`);
   next();
 });
 
@@ -33,7 +56,8 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.0',
+    cors_origins: corsOrigins
   });
 });
 
