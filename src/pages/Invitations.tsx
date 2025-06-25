@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGuests, useCreateGuest, useDeleteGuest } from "@/hooks/useGuests";
+import CSVImport from "@/components/CSVImport";
 
 const Invitations = () => {
   const [newGuestName, setNewGuestName] = useState("");
   const [newGuestEmail, setNewGuestEmail] = useState("");
+  const [isImportingCSV, setIsImportingCSV] = useState(false);
   const { data: guests = [], isLoading, error } = useGuests();
   const createGuestMutation = useCreateGuest();
   const deleteGuestMutation = useDeleteGuest();
@@ -25,6 +27,29 @@ const Invitations = () => {
         setNewGuestEmail("");
       }
     });
+  };
+
+  const handleCSVImport = async (csvGuests: { name: string; email: string }[]) => {
+    setIsImportingCSV(true);
+    
+    try {
+      // Import guests one by one
+      for (const guest of csvGuests) {
+        await new Promise((resolve, reject) => {
+          createGuestMutation.mutate(
+            { name: guest.name, email: guest.email },
+            {
+              onSuccess: resolve,
+              onError: reject
+            }
+          );
+        });
+      }
+    } catch (error) {
+      console.error('Error importing CSV guests:', error);
+    } finally {
+      setIsImportingCSV(false);
+    }
   };
 
   const removeGuest = (guestId: string) => {
@@ -67,6 +92,11 @@ const Invitations = () => {
             Einladungen erstellen
           </h1>
         </div>
+
+        <CSVImport 
+          onImport={handleCSVImport} 
+          isImporting={isImportingCSV || createGuestMutation.isPending}
+        />
 
         <Card className="backdrop-blur-sm bg-white/20 border-white/30 mb-8">
           <CardHeader>
