@@ -1,18 +1,46 @@
 
-import { useState } from "react";
-import { ArrowLeft, Mail, Plus, Trash2, Building } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Mail, Plus, Trash2, Building, AlertCircle, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBusinessEmails, useAddBusinessEmail, useDeleteBusinessEmail } from "@/hooks/useBusinessEmails";
+import { testApiConnection } from "@/config/api";
+import { toast } from "sonner";
 
 const BusinessEmails = () => {
   const [newEmail, setNewEmail] = useState("");
   const [newCompany, setNewCompany] = useState("");
-  const { data: businessEmails = [], isLoading, error } = useBusinessEmails();
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'connected' | 'failed'>('unknown');
+  
+  const { data: businessEmails = [], isLoading, error, refetch } = useBusinessEmails();
   const addEmailMutation = useAddBusinessEmail();
   const deleteEmailMutation = useDeleteBusinessEmail();
+
+  useEffect(() => {
+    // Teste Verbindung beim Laden der Komponente
+    testConnection();
+  }, []);
+
+  const testConnection = async () => {
+    setIsTestingConnection(true);
+    try {
+      const isConnected = await testApiConnection();
+      setConnectionStatus(isConnected ? 'connected' : 'failed');
+      if (!isConnected) {
+        toast.error('Verbindung zum Server fehlgeschlagen');
+      } else {
+        toast.success('Verbindung zum Server erfolgreich');
+      }
+    } catch (error) {
+      setConnectionStatus('failed');
+      toast.error('Verbindung zum Server fehlgeschlagen');
+    } finally {
+      setIsTestingConnection(false);
+    }
+  };
 
   const addBusinessEmail = async () => {
     if (!newEmail.trim()) {
@@ -38,11 +66,40 @@ const BusinessEmails = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700 flex items-center justify-center">
         <Card className="backdrop-blur-sm bg-white/20 border-white/30 max-w-md">
-          <CardContent className="pt-6 text-center">
-            <p className="text-white text-lg mb-4">Verbindung zum Server fehlgeschlagen</p>
-            <p className="text-white/70 text-sm">
-              Stelle sicher, dass dein API-Server läuft.
-            </p>
+          <CardContent className="pt-6 text-center space-y-4">
+            <AlertCircle className="h-16 w-16 text-red-400 mx-auto" />
+            <div>
+              <p className="text-white text-lg mb-2">Verbindung zum Server fehlgeschlagen</p>
+              <p className="text-white/70 text-sm mb-4">
+                Stelle sicher, dass dein API-Server läuft.
+              </p>
+              <div className="space-y-2">
+                <Button 
+                  onClick={testConnection} 
+                  disabled={isTestingConnection}
+                  className="bg-white/20 hover:bg-white/30 text-white w-full"
+                >
+                  {isTestingConnection ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Teste Verbindung...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Verbindung testen
+                    </>
+                  )}
+                </Button>
+                <Button 
+                  onClick={() => refetch()} 
+                  variant="outline"
+                  className="bg-white/10 border-white/30 text-white hover:bg-white/20 w-full"
+                >
+                  Erneut versuchen
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -64,6 +121,37 @@ const BusinessEmails = () => {
           </h1>
         </div>
 
+        {/* Verbindungsstatus */}
+        <Card className="backdrop-blur-sm bg-white/20 border-white/30 mb-4">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={`w-3 h-3 rounded-full ${
+                  connectionStatus === 'connected' ? 'bg-green-400' : 
+                  connectionStatus === 'failed' ? 'bg-red-400' : 'bg-yellow-400'
+                }`} />
+                <span className="text-white text-sm">
+                  {connectionStatus === 'connected' ? 'Server verbunden' : 
+                   connectionStatus === 'failed' ? 'Server nicht erreichbar' : 'Verbindung wird getestet...'}
+                </span>
+              </div>
+              <Button 
+                onClick={testConnection} 
+                disabled={isTestingConnection}
+                size="sm"
+                variant="outline"
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+              >
+                {isTestingConnection ? (
+                  <RefreshCw className="h-3 w-3 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3 w-3" />
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="backdrop-blur-sm bg-white/20 border-white/30 mb-8">
           <CardHeader>
             <CardTitle className="text-white">Neue berechtigte Geschäftsemail hinzufügen</CardTitle>
@@ -77,20 +165,20 @@ const BusinessEmails = () => {
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
-                  disabled={addEmailMutation.isPending}
+                  disabled={addEmailMutation.isPending || connectionStatus === 'failed'}
                 />
                 <Input
                   placeholder="Firmenname (optional)"
                   value={newCompany}
                   onChange={(e) => setNewCompany(e.target.value)}
                   className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
-                  disabled={addEmailMutation.isPending}
+                  disabled={addEmailMutation.isPending || connectionStatus === 'failed'}
                 />
               </div>
               <Button 
                 onClick={addBusinessEmail} 
                 className="bg-white/20 hover:bg-white/30 text-white w-full"
-                disabled={addEmailMutation.isPending || !newEmail.trim()}
+                disabled={addEmailMutation.isPending || !newEmail.trim() || connectionStatus === 'failed'}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 {addEmailMutation.isPending ? 'Hinzufügen...' : 'Hinzufügen'}
@@ -128,7 +216,7 @@ const BusinessEmails = () => {
                       variant="destructive"
                       size="sm"
                       className="bg-red-500/20 hover:bg-red-500/30"
-                      disabled={deleteEmailMutation.isPending}
+                      disabled={deleteEmailMutation.isPending || connectionStatus === 'failed'}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -139,7 +227,7 @@ const BusinessEmails = () => {
           </div>
         )}
 
-        {!isLoading && businessEmails.length === 0 && (
+        {!isLoading && businessEmails.length === 0 && connectionStatus === 'connected' && (
           <Card className="backdrop-blur-sm bg-white/20 border-white/30 text-center py-12">
             <CardContent>
               <Mail className="h-16 w-16 text-white/50 mx-auto mb-4" />
