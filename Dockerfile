@@ -8,6 +8,8 @@ COPY package*.json ./
 FROM base AS development
 RUN npm ci
 COPY . .
+# Exclude backend directory from frontend container
+RUN rm -rf backend
 EXPOSE 8080
 CMD ["npm", "run", "dev"]
 
@@ -15,6 +17,7 @@ CMD ["npm", "run", "dev"]
 FROM base AS build
 RUN npm ci
 COPY . .
+RUN rm -rf backend
 RUN npm run build
 
 # Production stage

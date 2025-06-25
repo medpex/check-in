@@ -17,3 +17,9 @@ dist
 *~
 .DS_Store
 Thumbs.db
+
+# Exclude backend from frontend builds
+backend/node_modules
+backend/.env
+backend/logs
+backend/*.log
