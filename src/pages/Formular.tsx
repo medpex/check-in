@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Mail, QrCode, Users, UserPlus, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { formularService, GuestResponse } from "@/services/formularService";
 
 interface EmailVerificationForm {
   businessEmail: string;
@@ -19,17 +21,19 @@ interface GuestRegistrationForm {
 interface AdditionalGuest {
   name: string;
   email: string;
+  qrCode?: string;
 }
 
 const Formular = () => {
   const [emailVerified, setEmailVerified] = useState(false);
   const [verifiedBusinessEmail, setVerifiedBusinessEmail] = useState("");
   const [registrationComplete, setRegistrationComplete] = useState(false);
-  const [qrCode, setQrCode] = useState("");
+  const [mainGuest, setMainGuest] = useState<GuestResponse | null>(null);
   const [guestType, setGuestType] = useState<"family" | "friends" | null>(null);
   const [additionalGuests, setAdditionalGuests] = useState<AdditionalGuest[]>([]);
   const [newGuestName, setNewGuestName] = useState("");
   const [newGuestEmail, setNewGuestEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const emailForm = useForm<EmailVerificationForm>({
     defaultValues: {
@@ -46,15 +50,12 @@ const Formular = () => {
 
   const onEmailVerification = async (data: EmailVerificationForm) => {
     try {
+      setIsLoading(true);
       console.log("Verifying business email:", data.businessEmail);
       
-      // Simulate API call to verify business email against database
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const isValid = await formularService.verifyBusinessEmail(data);
       
-      // Mock verification - in real implementation, this would check against the database
-      const isValidEmail = data.businessEmail.includes("@"); // Simple mock validation
-      
-      if (isValidEmail) {
+      if (isValid) {
         setVerifiedBusinessEmail(data.businessEmail);
         setEmailVerified(true);
         toast.success("Geschäftliche Email erfolgreich verifiziert!");
@@ -64,37 +65,41 @@ const Formular = () => {
     } catch (error) {
       console.error("Email verification error:", error);
       toast.error("Fehler bei der Email-Verifizierung");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const onRegistrationSubmit = async (data: GuestRegistrationForm) => {
     try {
+      setIsLoading(true);
       console.log("Registering guest:", { ...data, businessEmail: verifiedBusinessEmail });
       
-      // Simulate API call for guest registration
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const guestResponse = await formularService.registerMainGuest({
+        name: data.name,
+        privateEmail: data.privateEmail,
+        businessEmail: verifiedBusinessEmail,
+      });
       
-      // Generate mock QR code (in real implementation, this would come from backend)
-      const mockQrCode = `data:image/svg+xml;base64,${btoa(`
-        <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
-          <rect width="200" height="200" fill="white"/>
-          <rect x="50" y="50" width="100" height="100" fill="black"/>
-          <text x="100" y="180" text-anchor="middle" font-family="Arial" font-size="12">QR Code für ${data.name}</text>
-        </svg>
-      `)}`;
-      
-      setQrCode(mockQrCode);
+      setMainGuest(guestResponse);
       setRegistrationComplete(true);
-      toast.success("Registrierung erfolgreich!");
+      toast.success("Registrierung erfolgreich! QR Code wurde erstellt.");
     } catch (error) {
       console.error("Registration error:", error);
       toast.error("Fehler bei der Registrierung");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const addAdditionalGuest = () => {
+  const addAdditionalGuest = async () => {
     if (!newGuestName.trim() || !newGuestEmail.trim()) {
       toast.error("Bitte Name und Email eingeben");
+      return;
+    }
+
+    if (!mainGuest) {
+      toast.error("Hauptgast nicht gefunden");
       return;
     }
 
@@ -104,10 +109,29 @@ const Formular = () => {
       return;
     }
 
-    setAdditionalGuests([...additionalGuests, { name: newGuestName, email: newGuestEmail }]);
-    setNewGuestName("");
-    setNewGuestEmail("");
-    toast.success(`${guestType === "family" ? "Familienmitglied" : "Freund"} hinzugefügt`);
+    try {
+      setIsLoading(true);
+      const additionalGuestResponse = await formularService.registerAdditionalGuest({
+        name: newGuestName,
+        email: newGuestEmail,
+        mainGuestId: mainGuest.id,
+        guestType: guestType!,
+      });
+
+      setAdditionalGuests([...additionalGuests, { 
+        name: newGuestName, 
+        email: newGuestEmail,
+        qrCode: additionalGuestResponse.qr_code 
+      }]);
+      setNewGuestName("");
+      setNewGuestEmail("");
+      toast.success(`${guestType === "family" ? "Familienmitglied" : "Freund"} hinzugefügt und QR Code erstellt`);
+    } catch (error) {
+      console.error("Error adding additional guest:", error);
+      toast.error("Fehler beim Hinzufügen des Gastes");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const removeAdditionalGuest = (index: number) => {
@@ -115,7 +139,6 @@ const Formular = () => {
   };
 
   const selectGuestType = (type: "family" | "friends") => {
-    // Clear existing guests when switching type
     setAdditionalGuests([]);
     setNewGuestName("");
     setNewGuestEmail("");
@@ -174,9 +197,9 @@ const Formular = () => {
                     <Button 
                       type="submit" 
                       className="w-full bg-white/20 hover:bg-white/30 text-white"
-                      disabled={emailForm.formState.isSubmitting}
+                      disabled={isLoading}
                     >
-                      {emailForm.formState.isSubmitting ? "Verifiziere..." : "Email verifizieren"}
+                      {isLoading ? "Verifiziere..." : "Email verifizieren"}
                     </Button>
                   </form>
                 </Form>
@@ -185,7 +208,6 @@ const Formular = () => {
           </div>
         </div>
         
-        {/* Footer */}
         <footer className="bg-black/20 border-t border-white/20 py-4">
           <div className="container mx-auto px-4 text-center">
             <p className="text-white/70 text-sm">© Jakob Ejne 2025</p>
@@ -208,7 +230,6 @@ const Formular = () => {
               </h1>
             </div>
 
-            {/* Email Verified Indicator */}
             <div className="flex items-center justify-center gap-2 mb-6">
               <CheckCircle className="h-5 w-5 text-green-400" />
               <span className="text-white/80 text-sm">
@@ -271,9 +292,9 @@ const Formular = () => {
                     <Button 
                       type="submit" 
                       className="w-full bg-white/20 hover:bg-white/30 text-white"
-                      disabled={registrationForm.formState.isSubmitting}
+                      disabled={isLoading}
                     >
-                      {registrationForm.formState.isSubmitting ? "Registriere..." : "Registrieren"}
+                      {isLoading ? "Registriere..." : "Registrieren"}
                     </Button>
                   </form>
                 </Form>
@@ -282,7 +303,6 @@ const Formular = () => {
           </div>
         </div>
         
-        {/* Footer */}
         <footer className="bg-black/20 border-t border-white/20 py-4">
           <div className="container mx-auto px-4 text-center">
             <p className="text-white/70 text-sm">© Jakob Ejne 2025</p>
@@ -311,12 +331,21 @@ const Formular = () => {
             </CardHeader>
             <CardContent className="text-center space-y-4">
               <div className="bg-white p-4 rounded-lg">
-                <img 
-                  src={qrCode} 
-                  alt="Ihr persönlicher QR Code"
-                  className="w-full max-w-[200px] mx-auto"
-                />
+                {mainGuest?.qr_code ? (
+                  <img 
+                    src={mainGuest.qr_code} 
+                    alt="Ihr persönlicher QR Code"
+                    className="w-full max-w-[200px] mx-auto"
+                  />
+                ) : (
+                  <div className="w-[200px] h-[200px] mx-auto bg-gray-200 flex items-center justify-center">
+                    <span className="text-gray-500">QR Code wird geladen...</span>
+                  </div>
+                )}
               </div>
+              <p className="text-white/80 text-sm">
+                Name: {mainGuest?.name}
+              </p>
               <Button 
                 className="w-full bg-white/20 hover:bg-white/30 text-white"
                 disabled
@@ -389,10 +418,10 @@ const Formular = () => {
                   <Button 
                     onClick={addAdditionalGuest}
                     className="w-full bg-white/20 hover:bg-white/30 text-white"
-                    disabled={additionalGuests.length >= (guestType === "family" ? 10 : 2)}
+                    disabled={additionalGuests.length >= (guestType === "family" ? 10 : 2) || isLoading}
                   >
                     <UserPlus className="h-4 w-4 mr-2" />
-                    {guestType === "family" ? "Familienmitglied" : "Freund"} hinzufügen
+                    {isLoading ? "Wird hinzugefügt..." : `${guestType === "family" ? "Familienmitglied" : "Freund"} hinzufügen`}
                   </Button>
                 </div>
 
@@ -403,19 +432,30 @@ const Formular = () => {
                       Hinzugefügte {guestType === "family" ? "Familienmitglieder" : "Freunde"}:
                     </h4>
                     {additionalGuests.map((guest, index) => (
-                      <div key={index} className="flex items-center justify-between bg-white/10 p-2 rounded">
-                        <div className="text-white text-sm">
-                          <div>{guest.name}</div>
-                          <div className="text-white/70 text-xs">{guest.email}</div>
+                      <div key={index} className="bg-white/10 p-3 rounded space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="text-white text-sm">
+                            <div>{guest.name}</div>
+                            <div className="text-white/70 text-xs">{guest.email}</div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => removeAdditionalGuest(index)}
+                            className="bg-red-500/20 hover:bg-red-500/30"
+                          >
+                            Entfernen
+                          </Button>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => removeAdditionalGuest(index)}
-                          className="bg-red-500/20 hover:bg-red-500/30"
-                        >
-                          Entfernen
-                        </Button>
+                        {guest.qrCode && (
+                          <div className="bg-white p-2 rounded">
+                            <img 
+                              src={guest.qrCode} 
+                              alt={`QR Code für ${guest.name}`}
+                              className="w-full max-w-[100px] mx-auto"
+                            />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -434,7 +474,6 @@ const Formular = () => {
         </div>
       </div>
       
-      {/* Footer */}
       <footer className="bg-black/20 border-t border-white/20 py-4">
         <div className="container mx-auto px-4 text-center">
           <p className="text-white/70 text-sm">© Jakob Ejne 2025</p>
