@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ArrowLeft, Mail, QrCode, Users, UserPlus } from "lucide-react";
+import { ArrowLeft, Mail, QrCode, Users, UserPlus, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+interface EmailVerificationForm {
+  businessEmail: string;
+}
+
 interface GuestRegistrationForm {
   name: string;
   privateEmail: string;
-  businessEmail: string;
 }
 
 interface AdditionalGuest {
@@ -21,6 +24,8 @@ interface AdditionalGuest {
 }
 
 const Formular = () => {
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verifiedBusinessEmail, setVerifiedBusinessEmail] = useState("");
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [qrCode, setQrCode] = useState("");
   const [guestType, setGuestType] = useState<"family" | "friends" | null>(null);
@@ -28,17 +33,45 @@ const Formular = () => {
   const [newGuestName, setNewGuestName] = useState("");
   const [newGuestEmail, setNewGuestEmail] = useState("");
 
-  const form = useForm<GuestRegistrationForm>({
+  const emailForm = useForm<EmailVerificationForm>({
     defaultValues: {
-      name: "",
-      privateEmail: "",
       businessEmail: "",
     },
   });
 
-  const onSubmit = async (data: GuestRegistrationForm) => {
+  const registrationForm = useForm<GuestRegistrationForm>({
+    defaultValues: {
+      name: "",
+      privateEmail: "",
+    },
+  });
+
+  const onEmailVerification = async (data: EmailVerificationForm) => {
     try {
-      console.log("Registering guest:", data);
+      console.log("Verifying business email:", data.businessEmail);
+      
+      // Simulate API call to verify business email against database
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock verification - in real implementation, this would check against the database
+      const isValidEmail = data.businessEmail.includes("@"); // Simple mock validation
+      
+      if (isValidEmail) {
+        setVerifiedBusinessEmail(data.businessEmail);
+        setEmailVerified(true);
+        toast.success("Geschäftliche Email erfolgreich verifiziert!");
+      } else {
+        toast.error("Diese Email ist nicht in unserer Einladungsliste vorhanden.");
+      }
+    } catch (error) {
+      console.error("Email verification error:", error);
+      toast.error("Fehler bei der Email-Verifizierung");
+    }
+  };
+
+  const onRegistrationSubmit = async (data: GuestRegistrationForm) => {
+    try {
+      console.log("Registering guest:", { ...data, businessEmail: verifiedBusinessEmail });
       
       // Simulate API call for guest registration
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -83,7 +116,8 @@ const Formular = () => {
     setAdditionalGuests(additionalGuests.filter((_, i) => i !== index));
   };
 
-  if (!registrationComplete) {
+  // Email Verification Step
+  if (!emailVerified) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700">
         <div className="container mx-auto px-4 py-8">
@@ -94,65 +128,23 @@ const Formular = () => {
               </Button>
             </Link>
             <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-              <UserPlus className="h-8 w-8" />
-              Gast Registrierung
+              <Mail className="h-8 w-8" />
+              Email Verifizierung
             </h1>
           </div>
 
           <Card className="backdrop-blur-sm bg-white/20 border-white/30 max-w-md mx-auto">
             <CardHeader>
-              <CardTitle className="text-white text-center">Anmeldung</CardTitle>
+              <CardTitle className="text-white text-center">Willkommen!</CardTitle>
+              <p className="text-white/70 text-center text-sm">
+                Bitte geben Sie Ihre geschäftliche Email-Adresse ein, um fortzufahren.
+              </p>
             </CardHeader>
             <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <Form {...emailForm}>
+                <form onSubmit={emailForm.handleSubmit(onEmailVerification)} className="space-y-4">
                   <FormField
-                    control={form.control}
-                    name="name"
-                    rules={{ required: "Name ist erforderlich" }}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white">Name</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Ihr vollständiger Name"
-                            className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="privateEmail"
-                    rules={{ 
-                      required: "Private Email ist erforderlich",
-                      pattern: {
-                        value: /\S+@\S+\.\S+/,
-                        message: "Ungültige Email-Adresse"
-                      }
-                    }}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white">Private Email</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="ihre.private@email.com"
-                            className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
+                    control={emailForm.control}
                     name="businessEmail"
                     rules={{ 
                       required: "Geschäftliche Email ist erforderlich",
@@ -180,9 +172,9 @@ const Formular = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-white/20 hover:bg-white/30 text-white"
-                    disabled={form.formState.isSubmitting}
+                    disabled={emailForm.formState.isSubmitting}
                   >
-                    {form.formState.isSubmitting ? "Registriere..." : "Registrieren"}
+                    {emailForm.formState.isSubmitting ? "Verifiziere..." : "Email verifizieren"}
                   </Button>
                 </form>
               </Form>
@@ -193,6 +185,100 @@ const Formular = () => {
     );
   }
 
+  // Registration Form Step (after email verification)
+  if (!registrationComplete) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center gap-4 mb-8">
+            <Link to="/">
+              <Button variant="outline" size="icon" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+              <UserPlus className="h-8 w-8" />
+              Gast Registrierung
+            </h1>
+          </div>
+
+          {/* Email Verified Indicator */}
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <CheckCircle className="h-5 w-5 text-green-400" />
+            <span className="text-white/80 text-sm">
+              Email verifiziert: {verifiedBusinessEmail}
+            </span>
+          </div>
+
+          <Card className="backdrop-blur-sm bg-white/20 border-white/30 max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle className="text-white text-center">Persönliche Daten</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Form {...registrationForm}>
+                <form onSubmit={registrationForm.handleSubmit(onRegistrationSubmit)} className="space-y-4">
+                  <FormField
+                    control={registrationForm.control}
+                    name="name"
+                    rules={{ required: "Name ist erforderlich" }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-white">Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Ihr vollständiger Name"
+                            className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={registrationForm.control}
+                    name="privateEmail"
+                    rules={{ 
+                      required: "Private Email ist erforderlich",
+                      pattern: {
+                        value: /\S+@\S+\.\S+/,
+                        message: "Ungültige Email-Adresse"
+                      }
+                    }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-white">Private Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="ihre.private@email.com"
+                            className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-white/20 hover:bg-white/30 text-white"
+                    disabled={registrationForm.formState.isSubmitting}
+                  >
+                    {registrationForm.formState.isSubmitting ? "Registriere..." : "Registrieren"}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // QR Code and Additional Guests (existing code)
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700">
       <div className="container mx-auto px-4 py-8">
