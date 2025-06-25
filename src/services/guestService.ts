@@ -4,6 +4,7 @@ import { apiUrl, API_CONFIG } from '@/config/api';
 export interface Guest {
   id: string;
   name: string;
+  email?: string;
   qr_code: string;
   created_at?: string;
 }
@@ -16,13 +17,13 @@ export interface CheckedInGuest {
 }
 
 class GuestService {
-  async createGuest(name: string): Promise<Guest> {
+  async createGuest(name: string, email?: string): Promise<Guest> {
     const response = await fetch(apiUrl(API_CONFIG.ENDPOINTS.GUESTS), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, email }),
     });
 
     if (!response.ok) {

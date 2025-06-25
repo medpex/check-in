@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ArrowLeft, Download, QrCode, Plus, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -8,18 +9,20 @@ import { useGuests, useCreateGuest, useDeleteGuest } from "@/hooks/useGuests";
 
 const Invitations = () => {
   const [newGuestName, setNewGuestName] = useState("");
+  const [newGuestEmail, setNewGuestEmail] = useState("");
   const { data: guests = [], isLoading, error } = useGuests();
   const createGuestMutation = useCreateGuest();
   const deleteGuestMutation = useDeleteGuest();
 
   const addGuest = async () => {
-    if (!newGuestName.trim()) {
+    if (!newGuestName.trim() || !newGuestEmail.trim()) {
       return;
     }
 
-    createGuestMutation.mutate(newGuestName, {
+    createGuestMutation.mutate({ name: newGuestName, email: newGuestEmail }, {
       onSuccess: () => {
         setNewGuestName("");
+        setNewGuestEmail("");
       }
     });
   };
@@ -70,19 +73,28 @@ const Invitations = () => {
             <CardTitle className="text-white">Neuen Gast hinzufügen</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
-              <Input
-                placeholder="Name des Gastes"
-                value={newGuestName}
-                onChange={(e) => setNewGuestName(e.target.value)}
-                className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
-                onKeyPress={(e) => e.key === 'Enter' && addGuest()}
-                disabled={createGuestMutation.isPending}
-              />
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <Input
+                  placeholder="Name des Gastes"
+                  value={newGuestName}
+                  onChange={(e) => setNewGuestName(e.target.value)}
+                  className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
+                  disabled={createGuestMutation.isPending}
+                />
+                <Input
+                  placeholder="Email des Gastes"
+                  type="email"
+                  value={newGuestEmail}
+                  onChange={(e) => setNewGuestEmail(e.target.value)}
+                  className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
+                  disabled={createGuestMutation.isPending}
+                />
+              </div>
               <Button 
                 onClick={addGuest} 
-                className="bg-white/20 hover:bg-white/30 text-white"
-                disabled={createGuestMutation.isPending || !newGuestName.trim()}
+                className="bg-white/20 hover:bg-white/30 text-white w-full"
+                disabled={createGuestMutation.isPending || !newGuestName.trim() || !newGuestEmail.trim()}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 {createGuestMutation.isPending ? 'Erstelle...' : 'Hinzufügen'}
@@ -103,6 +115,9 @@ const Invitations = () => {
               <Card key={guest.id} className="backdrop-blur-sm bg-white/20 border-white/30">
                 <CardHeader className="text-center">
                   <CardTitle className="text-white">{guest.name}</CardTitle>
+                  {guest.email && (
+                    <p className="text-white/70 text-sm">{guest.email}</p>
+                  )}
                 </CardHeader>
                 <CardContent className="text-center space-y-4">
                   <div className="bg-white p-4 rounded-lg">

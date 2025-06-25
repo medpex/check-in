@@ -23,7 +23,7 @@ export const useCreateGuest = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (name: string) => guestService.createGuest(name),
+    mutationFn: ({ name, email }: { name: string; email: string }) => guestService.createGuest(name, email),
     onSuccess: (newGuest) => {
       queryClient.invalidateQueries({ queryKey: ['guests'] });
       toast.success(`Einladung für ${newGuest.name} erstellt!`);
