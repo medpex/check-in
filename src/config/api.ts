@@ -1,20 +1,13 @@
 
-// API Konfiguration mit Fallback-Logik
+// API Konfiguration mit vereinfachter Logik
 const getApiUrl = () => {
-  // Versuche zuerst die Umgebungsvariable
+  // Verwende die Umgebungsvariable falls gesetzt
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
   
-  // Fallback: Versuche verschiedene lokale URLs
+  // Fallback: Verwende die aktuelle Domain mit Port 3001
   const hostname = window.location.hostname;
-  
-  // Wenn wir auf localhost sind, nutze localhost für API
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'http://localhost:3001/api';
-  }
-  
-  // Sonst nutze die gleiche IP wie das Frontend
   return `http://${hostname}:3001/api`;
 };
 
@@ -33,12 +26,23 @@ export const apiUrl = (endpoint: string) => {
   return `${baseUrl}${endpoint}`;
 };
 
-// Hilfsfunktion zum Testen der API-Verbindung
+// Verbesserte Hilfsfunktion zum Testen der API-Verbindung
 export const testApiConnection = async (): Promise<boolean> => {
   try {
-    const response = await fetch(apiUrl('/health'));
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 Sekunden Timeout
+    
+    const response = await fetch(apiUrl('/health'), {
+      signal: controller.signal,
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    clearTimeout(timeoutId);
     const result = response.ok;
-    console.log(`🏥 API Health Check: ${result ? '✅ OK' : '❌ FAILED'}`);
+    console.log(`🏥 API Health Check: ${result ? '✅ OK' : '❌ FAILED'} (${response.status})`);
     return result;
   } catch (error) {
     console.error('🚨 API Connection Test Failed:', error);

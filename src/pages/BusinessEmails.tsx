@@ -14,29 +14,45 @@ const BusinessEmails = () => {
   const [newCompany, setNewCompany] = useState("");
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'connected' | 'failed'>('unknown');
+  const [lastConnectionTest, setLastConnectionTest] = useState<number>(0);
   
   const { data: businessEmails = [], isLoading, error, refetch } = useBusinessEmails();
   const addEmailMutation = useAddBusinessEmail();
   const deleteEmailMutation = useDeleteBusinessEmail();
 
   useEffect(() => {
-    // Teste Verbindung beim Laden der Komponente
+    // Teste Verbindung beim ersten Laden
     testConnection();
-  }, []);
+    
+    // Teste Verbindung alle 30 Sekunden
+    const interval = setInterval(() => {
+      const now = Date.now();
+      if (now - lastConnectionTest > 30000) { // Mindestens 30 Sekunden zwischen Tests
+        testConnection();
+      }
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [lastConnectionTest]);
 
   const testConnection = async () => {
+    if (isTestingConnection) return; // Verhindere mehrfache gleichzeitige Tests
+    
     setIsTestingConnection(true);
+    setLastConnectionTest(Date.now());
+    
     try {
       const isConnected = await testApiConnection();
       setConnectionStatus(isConnected ? 'connected' : 'failed');
+      
       if (!isConnected) {
-        toast.error('Verbindung zum Server fehlgeschlagen');
+        console.log('🔴 API-Verbindung fehlgeschlagen');
       } else {
-        toast.success('Verbindung zum Server erfolgreich');
+        console.log('🟢 API-Verbindung erfolgreich');
       }
     } catch (error) {
+      console.error('🚨 Verbindungstest-Fehler:', error);
       setConnectionStatus('failed');
-      toast.error('Verbindung zum Server fehlgeschlagen');
     } finally {
       setIsTestingConnection(false);
     }
@@ -44,6 +60,7 @@ const BusinessEmails = () => {
 
   const addBusinessEmail = async () => {
     if (!newEmail.trim()) {
+      toast.error('Bitte geben Sie eine Email-Adresse ein');
       return;
     }
 
@@ -54,6 +71,7 @@ const BusinessEmails = () => {
       onSuccess: () => {
         setNewEmail("");
         setNewCompany("");
+        toast.success('Geschäftsemail erfolgreich hinzugefügt');
       }
     });
   };
@@ -71,7 +89,7 @@ const BusinessEmails = () => {
             <div>
               <p className="text-white text-lg mb-2">Verbindung zum Server fehlgeschlagen</p>
               <p className="text-white/70 text-sm mb-4">
-                Stelle sicher, dass dein API-Server läuft.
+                Stelle sicher, dass dein API-Server läuft und erreichbar ist.
               </p>
               <div className="space-y-2">
                 <Button 
@@ -152,6 +170,7 @@ const BusinessEmails = () => {
           </CardContent>
         </Card>
 
+        {/* Neue Email hinzufügen */}
         <Card className="backdrop-blur-sm bg-white/20 border-white/30 mb-8">
           <CardHeader>
             <CardTitle className="text-white">Neue berechtigte Geschäftsemail hinzufügen</CardTitle>
@@ -187,6 +206,7 @@ const BusinessEmails = () => {
           </CardContent>
         </Card>
 
+        {/* Geschäftsemails anzeigen */}
         {isLoading ? (
           <Card className="backdrop-blur-sm bg-white/20 border-white/30 text-center py-12">
             <CardContent>
