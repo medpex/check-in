@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Invitations from "./pages/Invitations";
 import Scanner from "./pages/Scanner";
+import ScannerIn from "./pages/ScannerIn";
+import ScannerOut from "./pages/ScannerOut";
 import Guests from "./pages/Guests";
 import Formular from "./pages/Formular";
 import NotFound from "./pages/NotFound";
@@ -23,6 +25,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/invitations" element={<Invitations />} />
           <Route path="/scanner" element={<Scanner />} />
+          <Route path="/scanner-in" element={<ScannerIn />} />
+          <Route path="/scanner-out" element={<ScannerOut />} />
           <Route path="/guests" element={<Guests />} />
           <Route path="/formular" element={<Formular />} />
           <Route path="*" element={<NotFound />} />
