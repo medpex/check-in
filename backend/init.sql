@@ -1,17 +1,40 @@
 
 -- Datenbank-Schema für QR Scanner Party App
 
--- Gäste-Tabelle
+-- Gäste-Tabelle erstellen oder erweitern
 CREATE TABLE IF NOT EXISTS guests (
     id UUID PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255),
     qr_code TEXT NOT NULL,
-    main_guest_id UUID,
-    guest_type VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (main_guest_id) REFERENCES guests(id) ON DELETE CASCADE
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Neue Spalten hinzufügen falls sie noch nicht existieren
+DO $$ 
+BEGIN 
+    -- main_guest_id Spalte hinzufügen
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='guests' AND column_name='main_guest_id') THEN
+        ALTER TABLE guests ADD COLUMN main_guest_id UUID;
+    END IF;
+    
+    -- guest_type Spalte hinzufügen
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='guests' AND column_name='guest_type') THEN
+        ALTER TABLE guests ADD COLUMN guest_type VARCHAR(50);
+    END IF;
+END $$;
+
+-- Foreign Key Constraint hinzufügen (nur wenn noch nicht vorhanden)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints 
+                   WHERE constraint_name='guests_main_guest_id_fkey') THEN
+        ALTER TABLE guests ADD CONSTRAINT guests_main_guest_id_fkey 
+        FOREIGN KEY (main_guest_id) REFERENCES guests(id) ON DELETE CASCADE;
+    END IF;
+END $$;
 
 -- Check-ins Tabelle
 CREATE TABLE IF NOT EXISTS checkins (
