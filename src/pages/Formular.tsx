@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Mail, QrCode, Users, UserPlus, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +27,10 @@ const Formular = () => {
   const [newGuestName, setNewGuestName] = useState("");
   const [newGuestEmail, setNewGuestEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [existingGuestTypes, setExistingGuestTypes] = useState<{
+    hasFamily: boolean;
+    hasFriends: boolean;
+  }>({ hasFamily: false, hasFriends: false });
 
   const emailForm = useForm<EmailVerificationForm>({
     defaultValues: {
@@ -42,12 +45,44 @@ const Formular = () => {
     },
   });
 
+  // Prüfe vorhandene Gäste-Typen wenn mainGuest vorhanden ist
+  useEffect(() => {
+    if (mainGuest) {
+      checkExistingGuestTypes();
+    }
+  }, [mainGuest]);
+
   // Lade zusätzliche Gäste wenn guestType gewählt wird
   useEffect(() => {
     if (mainGuest && guestType) {
       loadAdditionalGuests();
     }
   }, [mainGuest, guestType]);
+
+  const checkExistingGuestTypes = async () => {
+    if (!mainGuest) return;
+
+    try {
+      // Prüfe auf Familie-Gäste
+      const familyGuests = await formularService.getAdditionalGuests(mainGuest.id, "family");
+      // Prüfe auf Freunde-Gäste
+      const friendsGuests = await formularService.getAdditionalGuests(mainGuest.id, "friends");
+      
+      setExistingGuestTypes({
+        hasFamily: familyGuests.length > 0,
+        hasFriends: friendsGuests.length > 0
+      });
+
+      // Wenn bereits ein Typ vorhanden ist, automatisch diesen auswählen
+      if (familyGuests.length > 0 && !friendsGuests.length) {
+        setGuestType("family");
+      } else if (friendsGuests.length > 0 && !familyGuests.length) {
+        setGuestType("friends");
+      }
+    } catch (error) {
+      console.error("Error checking existing guest types:", error);
+    }
+  };
 
   const loadAdditionalGuests = async () => {
     if (!mainGuest || !guestType) return;
@@ -134,6 +169,14 @@ const Formular = () => {
       setAdditionalGuests([...additionalGuests, additionalGuestResponse]);
       setNewGuestName("");
       setNewGuestEmail("");
+      
+      // Aktualisiere existingGuestTypes
+      setExistingGuestTypes(prev => ({
+        ...prev,
+        hasFamily: guestType === "family" ? true : prev.hasFamily,
+        hasFriends: guestType === "friends" ? true : prev.hasFriends
+      }));
+      
       toast.success(`${guestType === "family" ? "Familienmitglied" : "Freund"} hinzugefügt und QR Code erstellt`);
     } catch (error) {
       console.error("Error adding additional guest:", error);
@@ -145,6 +188,17 @@ const Formular = () => {
 
   const removeAdditionalGuest = (guestId: string) => {
     setAdditionalGuests(additionalGuests.filter(guest => guest.id !== guestId));
+    
+    // Wenn alle Gäste eines Typs entfernt wurden, aktualisiere existingGuestTypes
+    const remainingGuests = additionalGuests.filter(guest => guest.id !== guestId);
+    if (remainingGuests.length === 0) {
+      setExistingGuestTypes(prev => ({
+        ...prev,
+        hasFamily: guestType === "family" ? false : prev.hasFamily,
+        hasFriends: guestType === "friends" ? false : prev.hasFriends
+      }));
+    }
+    
     // TODO: Implement backend deletion if needed
   };
 
@@ -376,20 +430,38 @@ const Formular = () => {
                 <p className="text-white/70 text-center text-sm">
                   Möchten Sie weitere Personen anmelden? Wählen Sie eine Option:
                 </p>
+                
+                {/* Zeige Info wenn bereits Gäste vorhanden sind */}
+                {(existingGuestTypes.hasFamily || existingGuestTypes.hasFriends) && (
+                  <div className="bg-blue-500/20 p-3 rounded text-center">
+                    <p className="text-white/80 text-sm">
+                      Sie haben bereits {existingGuestTypes.hasFamily ? "Familienmitglieder" : "Freunde"} registriert.
+                    </p>
+                  </div>
+                )}
+                
                 <div className="space-y-3">
                   <Button 
                     onClick={() => selectGuestType("family")}
-                    className="w-full bg-white/20 hover:bg-white/30 text-white"
+                    className="w-full bg-white/20 hover:bg-white/30 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={existingGuestTypes.hasFriends}
                   >
                     <Users className="h-4 w-4 mr-2" />
                     Familienmitglieder (bis zu 10)
+                    {existingGuestTypes.hasFriends && (
+                      <span className="ml-2 text-xs">(nicht verfügbar - bereits Freunde registriert)</span>
+                    )}
                   </Button>
                   <Button 
                     onClick={() => selectGuestType("friends")}
-                    className="w-full bg-white/20 hover:bg-white/30 text-white"
+                    className="w-full bg-white/20 hover:bg-white/30 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={existingGuestTypes.hasFamily}
                   >
                     <UserPlus className="h-4 w-4 mr-2" />
                     Freunde (bis zu 2)
+                    {existingGuestTypes.hasFamily && (
+                      <span className="ml-2 text-xs">(nicht verfügbar - bereits Familie registriert)</span>
+                    )}
                   </Button>
                 </div>
                 <p className="text-white/60 text-center text-xs">
