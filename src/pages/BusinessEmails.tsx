@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ArrowLeft, Mail, Plus, Trash2, Building, AlertCircle, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -23,35 +22,31 @@ const BusinessEmails = () => {
   useEffect(() => {
     // Teste Verbindung beim ersten Laden
     testConnection();
-    
-    // Teste Verbindung alle 30 Sekunden
-    const interval = setInterval(() => {
-      const now = Date.now();
-      if (now - lastConnectionTest > 30000) { // Mindestens 30 Sekunden zwischen Tests
-        testConnection();
-      }
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, [lastConnectionTest]);
+  }, []);
+
+  // Überwache Fehler beim Laden der Geschäftsemails
+  useEffect(() => {
+    if (error) {
+      setConnectionStatus('failed');
+    } else if (!isLoading && businessEmails.length >= 0 && connectionStatus !== 'failed') {
+      setConnectionStatus('connected');
+    }
+  }, [error, isLoading, businessEmails.length]);
 
   const testConnection = async () => {
     if (isTestingConnection) return; // Verhindere mehrfache gleichzeitige Tests
-    
     setIsTestingConnection(true);
     setLastConnectionTest(Date.now());
-    
     try {
       const isConnected = await testApiConnection();
-      setConnectionStatus(isConnected ? 'connected' : 'failed');
-      
       if (!isConnected) {
-        console.log('🔴 API-Verbindung fehlgeschlagen');
-      } else {
-        console.log('🟢 API-Verbindung erfolgreich');
+        setConnectionStatus('failed');
+        return;
       }
+      // Teste zusätzlich, ob Geschäftsemails geladen werden können
+      await refetch();
+      setConnectionStatus('connected');
     } catch (error) {
-      console.error('🚨 Verbindungstest-Fehler:', error);
       setConnectionStatus('failed');
     } finally {
       setIsTestingConnection(false);
