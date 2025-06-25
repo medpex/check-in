@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ArrowLeft, Mail, QrCode, Users, UserPlus, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -114,6 +113,14 @@ const Formular = () => {
 
   const removeAdditionalGuest = (index: number) => {
     setAdditionalGuests(additionalGuests.filter((_, i) => i !== index));
+  };
+
+  const selectGuestType = (type: "family" | "friends") => {
+    // Clear existing guests when switching type
+    setAdditionalGuests([]);
+    setNewGuestName("");
+    setNewGuestEmail("");
+    setGuestType(type);
   };
 
   // Email Verification Step
@@ -278,7 +285,7 @@ const Formular = () => {
     );
   }
 
-  // QR Code and Additional Guests (existing code)
+  // QR Code and Additional Guests
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700">
       <div className="container mx-auto px-4 py-8">
@@ -325,24 +332,27 @@ const Formular = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-white/70 text-center text-sm">
-                Möchten Sie weitere Personen anmelden?
+                Möchten Sie weitere Personen anmelden? Wählen Sie eine Option:
               </p>
               <div className="space-y-3">
                 <Button 
-                  onClick={() => setGuestType("family")}
+                  onClick={() => selectGuestType("family")}
                   className="w-full bg-white/20 hover:bg-white/30 text-white"
                 >
                   <Users className="h-4 w-4 mr-2" />
                   Familienmitglieder (bis zu 10)
                 </Button>
                 <Button 
-                  onClick={() => setGuestType("friends")}
+                  onClick={() => selectGuestType("friends")}
                   className="w-full bg-white/20 hover:bg-white/30 text-white"
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Freunde (bis zu 2)
                 </Button>
               </div>
+              <p className="text-white/60 text-center text-xs">
+                Sie können entweder Familienmitglieder ODER Freunde hinzufügen, nicht beides.
+              </p>
             </CardContent>
           </Card>
         )}
@@ -379,14 +389,16 @@ const Formular = () => {
                   disabled={additionalGuests.length >= (guestType === "family" ? 10 : 2)}
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
-                  Hinzufügen
+                  {guestType === "family" ? "Familienmitglied" : "Freund"} hinzufügen
                 </Button>
               </div>
 
               {/* Additional Guests List */}
               {additionalGuests.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="text-white font-medium">Hinzugefügte Personen:</h4>
+                  <h4 className="text-white font-medium">
+                    Hinzugefügte {guestType === "family" ? "Familienmitglieder" : "Freunde"}:
+                  </h4>
                   {additionalGuests.map((guest, index) => (
                     <div key={index} className="flex items-center justify-between bg-white/10 p-2 rounded">
                       <div className="text-white text-sm">
@@ -411,7 +423,7 @@ const Formular = () => {
                 variant="outline"
                 className="w-full bg-white/10 border-white/30 text-white hover:bg-white/20"
               >
-                Gast-Typ ändern
+                Zurück zur Auswahl
               </Button>
             </CardContent>
           </Card>
