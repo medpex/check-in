@@ -9,9 +9,9 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT c.id, c.guest_id, c.name, c.timestamp 
+      SELECT c.id, c.guest_id, c.guest_name as name, c.checked_in_at as timestamp 
       FROM checkins c 
-      ORDER BY c.timestamp DESC
+      ORDER BY c.checked_in_at DESC
     `);
     res.json(result.rows);
   } catch (error) {
@@ -46,16 +46,20 @@ router.post('/', async (req, res) => {
     }
 
     // Check-in erstellen
-    const checkinId = uuidv4();
     const checkinTimestamp = timestamp || new Date().toISOString();
 
     const result = await pool.query(
-      'INSERT INTO checkins (id, guest_id, name, timestamp) VALUES ($1, $2, $3, $4) RETURNING *',
-      [checkinId, guest_id, name, checkinTimestamp]
+      'INSERT INTO checkins (guest_id, guest_name, checked_in_at) VALUES ($1, $2, $3) RETURNING *',
+      [guest_id, name, checkinTimestamp]
     );
 
     console.log(`✅ Check-in: ${name} (${guest_id})`);
-    res.status(201).json(result.rows[0]);
+    res.status(201).json({
+      id: result.rows[0].id,
+      guest_id: result.rows[0].guest_id,
+      name: result.rows[0].guest_name,
+      timestamp: result.rows[0].checked_in_at
+    });
   } catch (error) {
     console.error('Fehler beim Check-in:', error);
     res.status(500).json({ error: 'Fehler beim Check-in' });
@@ -69,7 +73,7 @@ router.delete('/:guest_id', async (req, res) => {
 
     // Prüfen ob Gast eingecheckt ist
     const checkResult = await pool.query(
-      'SELECT name FROM checkins WHERE guest_id = $1',
+      'SELECT guest_name FROM checkins WHERE guest_id = $1',
       [guest_id]
     );
 
@@ -77,7 +81,7 @@ router.delete('/:guest_id', async (req, res) => {
       return res.status(404).json({ error: 'Guest not checked in' });
     }
 
-    const guestName = checkResult.rows[0].name;
+    const guestName = checkResult.rows[0].guest_name;
 
     // Check-in entfernen
     await pool.query('DELETE FROM checkins WHERE guest_id = $1', [guest_id]);
