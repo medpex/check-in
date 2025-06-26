@@ -1,6 +1,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { smtpService, SMTPConfig } from '@/services/smtpService';
+import { smtpService, SMTPConfig, EmailResponse } from '@/services/smtpService';
 import { toast } from 'sonner';
 
 export const useSMTPConfig = () => {
@@ -32,7 +32,7 @@ export const useTestSMTPConnection = () => {
   return useMutation({
     mutationFn: (config: Omit<SMTPConfig, 'id' | 'created_at' | 'updated_at'>) => 
       smtpService.testSMTPConnection(config),
-    onSuccess: (result) => {
+    onSuccess: (result: EmailResponse) => {
       if (result.success) {
         toast.success('SMTP-Verbindung erfolgreich getestet!');
       } else {
@@ -50,7 +50,7 @@ export const useSendInvitationEmail = () => {
   return useMutation({
     mutationFn: ({ guestId, recipientEmail }: { guestId: string; recipientEmail: string }) => 
       smtpService.sendInvitationEmail(guestId, recipientEmail),
-    onSuccess: (result) => {
+    onSuccess: (result: EmailResponse) => {
       if (result.success) {
         toast.success('Einladungs-E-Mail erfolgreich versendet!');
       } else {

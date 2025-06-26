@@ -14,6 +14,11 @@ export interface SMTPConfig {
   updated_at?: string;
 }
 
+export interface EmailResponse {
+  success: boolean;
+  message: string;
+}
+
 class SMTPService {
   async getSMTPConfig(): Promise<SMTPConfig | null> {
     try {
@@ -62,7 +67,7 @@ class SMTPService {
     }
   }
 
-  async testSMTPConnection(config: Omit<SMTPConfig, 'id' | 'created_at' | 'updated_at'>): Promise<{ success: boolean; message: string }> {
+  async testSMTPConnection(config: Omit<SMTPConfig, 'id' | 'created_at' | 'updated_at'>): Promise<EmailResponse> {
     try {
       console.log('🧪 Testing SMTP connection to:', apiUrl('/smtp/test'));
       const response = await fetch(apiUrl('/smtp/test'), {
@@ -90,7 +95,7 @@ class SMTPService {
     }
   }
 
-  async sendTestEmail(config: Omit<SMTPConfig, 'id' | 'created_at' | 'updated_at'> & { test_email: string }): Promise<{ success: boolean; message: string }> {
+  async sendTestEmail(config: Omit<SMTPConfig, 'id' | 'created_at' | 'updated_at'> & { test_email: string }): Promise<EmailResponse> {
     try {
       console.log('📧 Sending test email to:', apiUrl('/smtp/send-test-email'));
       const response = await fetch(apiUrl('/smtp/send-test-email'), {
@@ -114,6 +119,34 @@ class SMTPService {
       return {
         success: false,
         message: `Test-E-Mail-Versand fehlgeschlagen: ${error.message}`
+      };
+    }
+  }
+
+  async sendInvitationEmail(guestId: string, recipientEmail: string): Promise<EmailResponse> {
+    try {
+      console.log('📧 Sending invitation email to:', apiUrl('/smtp/send-invitation'));
+      const response = await fetch(apiUrl('/smtp/send-invitation'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ guestId, recipientEmail }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(`HTTP ${response.status}: ${errorData.error || response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('📧 Invitation email result:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Failed to send invitation email:', error);
+      return {
+        success: false,
+        message: `Einladungs-E-Mail-Versand fehlgeschlagen: ${error.message}`
       };
     }
   }
