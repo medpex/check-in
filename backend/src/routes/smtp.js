@@ -152,9 +152,9 @@ router.post('/config', async (req, res) => {
       console.log('✅ SMTP Config - Trigger erstellt');
     }
 
-    // Passwort verschlüsseln
-    const hashedPassword = await bcrypt.hash(password, 10);
-    console.log('📧 SMTP Config - Passwort verschlüsselt');
+    // Passwort NICHT verschlüsseln für E-Mail-Versand (speichere es temporär sicher)
+    // In einer produktiven Umgebung sollte eine sicherere Lösung verwendet werden
+    console.log('📧 SMTP Config - Passwort wird für E-Mail-Versand gespeichert');
 
     // Prüfen ob bereits eine Konfiguration existiert
     const existingConfig = await client.query('SELECT id FROM smtp_config ORDER BY created_at DESC LIMIT 1');
@@ -162,23 +162,23 @@ router.post('/config', async (req, res) => {
     let result;
     if (existingConfig.rows.length > 0) {
       console.log('📧 SMTP Config - Update existierende Konfiguration mit ID:', existingConfig.rows[0].id);
-      // Update existierende Konfiguration - FIXED: Properly quote "user" column
+      // Update existierende Konfiguration - Store password for email sending
       result = await client.query(
         `UPDATE smtp_config 
          SET host = $1, port = $2, secure = $3, "user" = $4, password = $5, 
              from_name = $6, from_email = $7, updated_at = CURRENT_TIMESTAMP
          WHERE id = $8 
          RETURNING id, host, port, secure, "user", from_name, from_email, created_at, updated_at`,
-        [host, portNum, secure === true, user, hashedPassword, from_name, from_email, existingConfig.rows[0].id]
+        [host, portNum, secure === true, user, password, from_name, from_email, existingConfig.rows[0].id]
       );
     } else {
       console.log('📧 SMTP Config - Neue Konfiguration erstellen');
-      // Neue Konfiguration erstellen - FIXED: Properly quote "user" column
+      // Neue Konfiguration erstellen - Store password for email sending
       result = await client.query(
         `INSERT INTO smtp_config (host, port, secure, "user", password, from_name, from_email)
          VALUES ($1, $2, $3, $4, $5, $6, $7) 
          RETURNING id, host, port, secure, "user", from_name, from_email, created_at, updated_at`,
-        [host, portNum, secure === true, user, hashedPassword, from_name, from_email]
+        [host, portNum, secure === true, user, password, from_name, from_email]
       );
     }
 
@@ -312,6 +312,7 @@ router.post('/send-test-email', async (req, res) => {
 
 // Einladungs-E-Mail senden
 router.post('/send-invitation', async (req, res) => {
+  let client;
   try {
     console.log('📧 Einladungs-E-Mail - Request erhalten');
     const { guestId, recipientEmail } = req.body;
@@ -323,8 +324,11 @@ router.post('/send-invitation', async (req, res) => {
       });
     }
 
+    // Datenbankverbindung herstellen
+    client = await pool.connect();
+    
     // SMTP-Konfiguration aus der Datenbank laden
-    const configResult = await pool.query('SELECT * FROM smtp_config ORDER BY created_at DESC LIMIT 1');
+    const configResult = await client.query('SELECT * FROM smtp_config ORDER BY created_at DESC LIMIT 1');
     
     if (configResult.rows.length === 0) {
       return res.status(400).json({ 
@@ -335,12 +339,101 @@ router.post('/send-invitation', async (req, res) => {
 
     const config = configResult.rows[0];
     
-    // Passwort entschlüsseln ist nicht möglich, da es gehasht ist
-    // Für Einladungen sollte die SMTP-Konfiguration anders gespeichert werden
-    // Vorerst Fehlermeldung zurückgeben
+    // Gast-Daten aus der Datenbank laden
+    const guestResult = await client.query('SELECT * FROM guests WHERE id = $1', [guestId]);
+    
+    if (guestResult.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Gast nicht gefunden' 
+      });
+    }
+
+    const guest = guestResult.rows[0];
+    
+    // SMTP-Transporter erstellen
+    const transporter = nodemailer.createTransport({
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+      auth: {
+        user: config.user,
+        pass: config.password // Passwort direkt verwenden
+      }
+    });
+
+    // E-Mail-Inhalt erstellen
+    const mailOptions = {
+      from: `"${config.from_name}" <${config.from_email}>`,
+      to: recipientEmail,
+      subject: 'Einladung zur Party - QR Code',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #333; text-align: center;">Du bist eingeladen! 🎉</h2>
+          
+          <p style="font-size: 16px; color: #555;">
+            Hallo <strong>${guest.name}</strong>,
+          </p>
+          
+          <p style="font-size: 16px; color: #555;">
+            du bist herzlich zu unserer Party eingeladen! Verwende den QR-Code unten für den Check-in vor Ort.
+          </p>
+          
+          <div style="text-align: center; margin: 30px 0; padding: 20px; background-color: #f9f9f9; border-radius: 10px;">
+            <h3 style="color: #333; margin-bottom: 15px;">Dein persönlicher QR-Code:</h3>
+            <img src="${guest.qr_code}" alt="QR Code für ${guest.name}" style="max-width: 200px; height: auto;" />
+            <p style="margin-top: 10px; font-size: 14px; color: #777;">
+              Zeige diesen QR-Code beim Check-in vor
+            </p>
+          </div>
+          
+          <div style="background-color: #e7f3ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h4 style="color: #1976d2; margin-top: 0;">Wichtige Informationen:</h4>
+            <ul style="color: #555; margin: 10px 0; padding-left: 20px;">
+              <li>Bringe diesen QR-Code auf deinem Handy mit</li>
+              <li>Der QR-Code ist dein persönlicher Einlass</li>
+              <li>Bei Fragen wende dich an das Event-Team</li>
+            </ul>
+          </div>
+          
+          <p style="font-size: 16px; color: #555; text-align: center; margin-top: 30px;">
+            Wir freuen uns auf dich! 🎊
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+          
+          <p style="font-size: 12px; color: #999; text-align: center;">
+            Diese E-Mail wurde automatisch generiert von der QR Scanner Party App.
+          </p>
+        </div>
+      `,
+      text: `
+Hallo ${guest.name},
+
+du bist herzlich zu unserer Party eingeladen!
+
+Verwende den QR-Code in dieser E-Mail für den Check-in vor Ort.
+
+Wichtige Informationen:
+- Bringe diesen QR-Code auf deinem Handy mit
+- Der QR-Code ist dein persönlicher Einlass
+- Bei Fragen wende dich an das Event-Team
+
+Wir freuen uns auf dich!
+
+---
+Diese E-Mail wurde automatisch generiert von der QR Scanner Party App.
+      `
+    };
+
+    // E-Mail senden
+    await transporter.sendMail(mailOptions);
+
+    console.log('✅ Einladungs-E-Mail erfolgreich versendet an:', recipientEmail);
+    
     res.json({ 
-      success: false, 
-      message: 'Einladungs-E-Mail-Funktionalität wird noch implementiert. Die SMTP-Konfiguration muss für E-Mail-Versand angepasst werden.' 
+      success: true, 
+      message: 'Einladungs-E-Mail erfolgreich versendet!' 
     });
     
   } catch (error) {
@@ -349,6 +442,10 @@ router.post('/send-invitation', async (req, res) => {
       success: false, 
       message: `Einladungs-E-Mail-Versand fehlgeschlagen: ${error.message}` 
     });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 });
 
