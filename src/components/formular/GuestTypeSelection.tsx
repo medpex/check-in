@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Users, UserPlus, Trash2, ArrowLeft, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { GuestResponse } from "@/services/formularService";
-import { EmailInputDialog } from "./EmailInputDialog";
 import { useSendQRCodeEmail } from "@/hooks/useSMTP";
 
 interface GuestTypeSelectionProps {
@@ -163,26 +161,26 @@ export const GuestTypeSelection = ({
                         <p className="text-white/70 text-sm">{guest.email}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {/* QR Code anzeigen */}
+                        {/* QR Code anzeigen - vergrößert */}
                         {guest.qr_code && (
                           <div className="bg-white p-2 rounded">
                             <img 
                               src={guest.qr_code} 
                               alt={`QR Code für ${guest.name}`}
-                              className="w-12 h-12"
+                              className="w-16 h-16"
                             />
                           </div>
                         )}
-                        {/* E-Mail-Button für Freunde */}
+                        {/* E-Mail-Button für Freunde - nutzt vorhandene E-Mail */}
                         {guestType === "friends" && (
-                          <EmailInputDialog
-                            onSendEmail={(email) => handleSendGuestQRCode(guest.id, email)}
-                            isLoading={sendQRCodeEmail.isPending}
-                            buttonText=""
-                            dialogTitle={`QR Code für ${guest.name} senden`}
-                            emailLabel="An E-Mail-Adresse senden"
-                            emailPlaceholder="freund@email.com"
-                          />
+                          <Button
+                            onClick={() => handleSendGuestQRCode(guest.id, guest.email)}
+                            disabled={sendQRCodeEmail.isPending}
+                            size="sm"
+                            className="bg-white/20 hover:bg-white/30 text-white border border-white/30"
+                          >
+                            <Mail className="h-4 w-4" />
+                          </Button>
                         )}
                         <Button
                           onClick={() => onRemoveAdditionalGuest(guest.id)}
