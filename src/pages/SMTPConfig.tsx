@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Mail, Send, TestTube, Save, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,18 +19,18 @@ const SMTPConfigPage = () => {
 
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Omit<SMTPConfig, 'id' | 'created_at' | 'updated_at'>>({
     defaultValues: {
-      host: smtpConfig?.host || '',
-      port: smtpConfig?.port || 587,
-      secure: smtpConfig?.secure || false,
-      user: smtpConfig?.user || '',
-      password: smtpConfig?.password || '',
-      from_name: smtpConfig?.from_name || '',
-      from_email: smtpConfig?.from_email || '',
+      host: '',
+      port: 587,
+      secure: false,
+      user: '',
+      password: '',
+      from_name: '',
+      from_email: '',
     }
   });
 
   // Reset form when data loads
-  useState(() => {
+  useEffect(() => {
     if (smtpConfig) {
       reset({
         host: smtpConfig.host,
@@ -42,7 +42,7 @@ const SMTPConfigPage = () => {
         from_email: smtpConfig.from_email,
       });
     }
-  });
+  }, [smtpConfig, reset]);
 
   const watchedValues = watch();
 

@@ -54,6 +54,20 @@ CREATE TABLE IF NOT EXISTS business_emails (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- SMTP Konfiguration Tabelle
+CREATE TABLE IF NOT EXISTS smtp_config (
+    id SERIAL PRIMARY KEY,
+    host VARCHAR(255) NOT NULL,
+    port INTEGER NOT NULL,
+    secure BOOLEAN NOT NULL DEFAULT false,
+    user VARCHAR(255) NOT NULL,
+    password TEXT NOT NULL,
+    from_name VARCHAR(255) NOT NULL,
+    from_email VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indizes für bessere Performance
 CREATE INDEX IF NOT EXISTS idx_guests_email ON guests(email);
 CREATE INDEX IF NOT EXISTS idx_guests_main_guest_id ON guests(main_guest_id);
