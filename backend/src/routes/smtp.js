@@ -1,3 +1,4 @@
+
 const express = require('express');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
@@ -479,7 +480,7 @@ router.post('/send-business-invite', async (req, res) => {
     const config = configResult.rows[0];
     
     // SMTP-Transporter erstellen
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: config.host,
       port: config.port,
       secure: config.secure,
@@ -618,7 +619,7 @@ router.post('/send-qr-code', async (req, res) => {
     const guest = guestResult.rows[0];
     
     // SMTP-Transporter erstellen
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: config.host,
       port: config.port,
       secure: config.secure,
