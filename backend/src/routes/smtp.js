@@ -619,7 +619,7 @@ router.post('/send-qr-code', async (req, res) => {
     const guest = guestResult.rows[0];
     
     // SMTP-Transporter erstellen
-    const transporter = nodemailer.createTransport({
+    const transporter = nodemailer.createTransporter({
       host: config.host,
       port: config.port,
       secure: config.secure,
@@ -629,7 +629,7 @@ router.post('/send-qr-code', async (req, res) => {
       }
     });
 
-    // E-Mail-Inhalt erstellen
+    // E-Mail-Inhalt erstellen mit eingebettetem QR-Code
     const mailOptions = {
       from: `"${config.from_name}" <${config.from_email}>`,
       to: recipientEmail,
@@ -648,7 +648,7 @@ router.post('/send-qr-code', async (req, res) => {
           
           <div style="text-align: center; margin: 30px 0; padding: 20px; background-color: #f9f9f9; border-radius: 10px;">
             <h3 style="color: #333; margin-bottom: 15px;">QR-Code für ${guest.name}:</h3>
-            <img src="${guest.qr_code}" alt="QR Code für ${guest.name}" style="max-width: 200px; height: auto;" />
+            <img src="${guest.qr_code}" alt="QR Code für ${guest.name}" style="max-width: 200px; height: auto; display: block; margin: 0 auto;" />
             <p style="margin-top: 10px; font-size: 14px; color: #777;">
               Zeige diesen QR-Code beim Check-in vor
             </p>
