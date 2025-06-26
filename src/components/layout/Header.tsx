@@ -6,8 +6,8 @@ export const Header = () => {
     <header className="bg-white/10 backdrop-blur-sm border-b border-white/20 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo Platzhalter */}
-          <Link to="/" className="flex items-center gap-3">
+          {/* Logo ohne Link */}
+          <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">Q</span>
             </div>
@@ -15,7 +15,7 @@ export const Header = () => {
               <h1 className="text-xl font-bold">QR Code Feier</h1>
               <p className="text-sm text-white/70">Check-in System</p>
             </div>
-          </Link>
+          </div>
         </div>
       </div>
     </header>

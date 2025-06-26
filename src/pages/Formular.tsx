@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { QrCode } from "lucide-react";
 import { toast } from "sonner";
@@ -215,42 +214,32 @@ const Formular = () => {
 
   // QR Code and Additional Guests
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700 flex flex-col">
-      <div className="flex-1">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center gap-4 mb-8">
-            <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-              <QrCode className="h-8 w-8" />
-              Registrierung Abgeschlossen
-            </h1>
-          </div>
-
-          {/* QR Code Display */}
-          {mainGuest && <QRCodeDisplay mainGuest={mainGuest} />}
-
-          {/* Guest Type Selection */}
-          <GuestTypeSelection
-            guestType={guestType}
-            existingGuestTypes={existingGuestTypes}
-            additionalGuests={additionalGuests}
-            newGuestName={newGuestName}
-            newGuestEmail={newGuestEmail}
-            isLoading={isLoading}
-            onGuestTypeSelect={selectGuestType}
-            onNewGuestNameChange={setNewGuestName}
-            onNewGuestEmailChange={setNewGuestEmail}
-            onAddAdditionalGuest={addAdditionalGuest}
-            onRemoveAdditionalGuest={removeAdditionalGuest}
-            onBackToSelection={() => setGuestType(null)}
-          />
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center justify-center gap-4 mb-8">
+        <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+          <QrCode className="h-8 w-8" />
+          Registrierung Abgeschlossen
+        </h1>
       </div>
-      
-      <footer className="bg-black/20 border-t border-white/20 py-4">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-white/70 text-sm">© Jakob Ejne 2025</p>
-        </div>
-      </footer>
+
+      {/* QR Code Display */}
+      {mainGuest && <QRCodeDisplay mainGuest={mainGuest} />}
+
+      {/* Guest Type Selection */}
+      <GuestTypeSelection
+        guestType={guestType}
+        existingGuestTypes={existingGuestTypes}
+        additionalGuests={additionalGuests}
+        newGuestName={newGuestName}
+        newGuestEmail={newGuestEmail}
+        isLoading={isLoading}
+        onGuestTypeSelect={selectGuestType}
+        onNewGuestNameChange={setNewGuestName}
+        onNewGuestEmailChange={setNewGuestEmail}
+        onAddAdditionalGuest={addAdditionalGuest}
+        onRemoveAdditionalGuest={removeAdditionalGuest}
+        onBackToSelection={() => setGuestType(null)}
+      />
     </div>
   );
 };
