@@ -11,8 +11,9 @@ interface LayoutProps {
 export const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const isScanner = location.pathname.includes('/scanner-');
+  const isFormular = location.pathname === '/formular';
 
-  if (isScanner) {
+  if (isScanner || isFormular) {
     return <>{children}</>;
   }
 
