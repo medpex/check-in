@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { QrCode } from "lucide-react";
 import { toast } from "sonner";
@@ -213,7 +212,7 @@ const Formular = () => {
     );
   }
 
-  // QR Code and Additional Guests - Entferne jeglichen Footer-Code hier
+  // QR Code and Additional Guests
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-center gap-4 mb-8">
