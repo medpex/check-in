@@ -1,7 +1,5 @@
 
 import { Link } from "react-router-dom";
-import { Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export const Header = () => {
   return (
@@ -17,14 +15,6 @@ export const Header = () => {
               <h1 className="text-xl font-bold">QR Code Feier</h1>
               <p className="text-sm text-white/70">Check-in System</p>
             </div>
-          </Link>
-
-          {/* Admin Button */}
-          <Link to="/admin">
-            <Button variant="outline" size="sm" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
-              <Settings className="h-4 w-4 mr-2" />
-              Admin
-            </Button>
           </Link>
         </div>
       </div>
