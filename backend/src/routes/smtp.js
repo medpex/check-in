@@ -182,4 +182,46 @@ router.post('/send-test-email', async (req, res) => {
   }
 });
 
+// Einladungs-E-Mail senden
+router.post('/send-invitation', async (req, res) => {
+  try {
+    console.log('📧 Einladungs-E-Mail - Request erhalten');
+    const { guestId, recipientEmail } = req.body;
+
+    if (!guestId || !recipientEmail) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Gast-ID und E-Mail-Adresse sind erforderlich' 
+      });
+    }
+
+    // SMTP-Konfiguration aus der Datenbank laden
+    const configResult = await pool.query('SELECT * FROM smtp_config ORDER BY created_at DESC LIMIT 1');
+    
+    if (configResult.rows.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Keine SMTP-Konfiguration gefunden. Bitte konfigurieren Sie zuerst die E-Mail-Einstellungen.' 
+      });
+    }
+
+    const config = configResult.rows[0];
+    
+    // Passwort entschlüsseln ist nicht möglich, da es gehasht ist
+    // Für Einladungen sollte die SMTP-Konfiguration anders gespeichert werden
+    // Vorerst Fehlermeldung zurückgeben
+    res.json({ 
+      success: false, 
+      message: 'Einladungs-E-Mail-Funktionalität wird noch implementiert. Die SMTP-Konfiguration muss für E-Mail-Versand angepasst werden.' 
+    });
+    
+  } catch (error) {
+    console.error('❌ Fehler beim Senden der Einladungs-E-Mail:', error);
+    res.json({ 
+      success: false, 
+      message: `Einladungs-E-Mail-Versand fehlgeschlagen: ${error.message}` 
+    });
+  }
+});
+
 module.exports = router;

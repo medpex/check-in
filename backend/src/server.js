@@ -61,7 +61,13 @@ app.get('/api/health', (req, res) => {
     status: 'OK', 
     timestamp: new Date().toISOString(),
     version: '1.0.0',
-    cors_origins: corsOrigins
+    cors_origins: corsOrigins,
+    routes: [
+      '/api/guests',
+      '/api/checkins', 
+      '/api/business-emails',
+      '/api/smtp'
+    ]
   });
 });
 
@@ -76,6 +82,7 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use('*', (req, res) => {
+  console.log(`❌ 404 - Route nicht gefunden: ${req.method} ${req.originalUrl}`);
   res.status(404).json({ error: 'Route not found' });
 });
 
@@ -83,6 +90,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Server läuft auf Port ${PORT}`);
   console.log(`📡 API verfügbar unter http://localhost:${PORT}/api`);
   console.log(`🏥 Health Check: http://localhost:${PORT}/api/health`);
+  console.log(`📧 SMTP Routes: http://localhost:${PORT}/api/smtp/*`);
 });
 
 module.exports = app;
