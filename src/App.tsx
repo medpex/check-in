@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Layout } from "@/components/layout/Layout";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import Invitations from "./pages/Invitations";
@@ -22,17 +23,19 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/invitations" element={<Invitations />} />
-          <Route path="/admin/guests" element={<Guests />} />
-          <Route path="/admin/business-emails" element={<BusinessEmails />} />
-          <Route path="/scanner-in" element={<ScannerIn />} />
-          <Route path="/scanner-out" element={<ScannerOut />} />
-          <Route path="/formular" element={<Formular />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/invitations" element={<Invitations />} />
+            <Route path="/admin/guests" element={<Guests />} />
+            <Route path="/admin/business-emails" element={<BusinessEmails />} />
+            <Route path="/scanner-in" element={<ScannerIn />} />
+            <Route path="/scanner-out" element={<ScannerOut />} />
+            <Route path="/formular" element={<Formular />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Layout>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
