@@ -162,7 +162,7 @@ router.post('/config', async (req, res) => {
     let result;
     if (existingConfig.rows.length > 0) {
       console.log('📧 SMTP Config - Update existierende Konfiguration mit ID:', existingConfig.rows[0].id);
-      // Update existierende Konfiguration
+      // Update existierende Konfiguration - FIXED: Properly quote "user" column
       result = await client.query(
         `UPDATE smtp_config 
          SET host = $1, port = $2, secure = $3, "user" = $4, password = $5, 
@@ -173,7 +173,7 @@ router.post('/config', async (req, res) => {
       );
     } else {
       console.log('📧 SMTP Config - Neue Konfiguration erstellen');
-      // Neue Konfiguration erstellen
+      // Neue Konfiguration erstellen - FIXED: Properly quote "user" column
       result = await client.query(
         `INSERT INTO smtp_config (host, port, secure, "user", password, from_name, from_email)
          VALUES ($1, $2, $3, $4, $5, $6, $7) 
