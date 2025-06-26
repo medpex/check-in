@@ -1,5 +1,5 @@
 
-import { ScanLine, Settings, UserPlus } from "lucide-react";
+import { ScanLine } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,8 +17,8 @@ const Index = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
-          {/* Scanner-Funktionen */}
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* Scanner Eingang */}
           <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
@@ -38,6 +38,7 @@ const Index = () => {
             </CardContent>
           </Card>
 
+          {/* Scanner Ausgang */}
           <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
@@ -52,48 +53,6 @@ const Index = () => {
               <Link to="/scanner-out">
                 <Button className="w-full bg-red-600/60 hover:bg-red-600/70 text-white">
                   Check-Out
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {/* Admin-Bereich */}
-          <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Settings className="h-6 w-6" />
-                Admin-Bereich
-              </CardTitle>
-              <CardDescription className="text-white/70">
-                Einladungen, Gäste und Einstellungen verwalten
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/admin">
-                <Button className="w-full bg-white/20 hover:bg-white/30 text-white">
-                  Verwalten
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* Gast-Registrierung */}
-          <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <UserPlus className="h-6 w-6" />
-                Gast-Registrierung
-              </CardTitle>
-              <CardDescription className="text-white/70">
-                Für eingeladene Gäste
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/formular">
-                <Button className="w-full bg-blue-600/60 hover:bg-blue-600/70 text-white">
-                  Registrieren
                 </Button>
               </Link>
             </CardContent>
