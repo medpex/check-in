@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ArrowLeft, Download, QrCode, Plus, Trash2, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -62,7 +63,7 @@ const Invitations = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
-          <Link to="/">
+          <Link to="/admin">
             <Button variant="outline" size="icon" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
               <ArrowLeft className="h-4 w-4" />
             </Button>

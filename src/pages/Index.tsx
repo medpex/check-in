@@ -1,5 +1,5 @@
 
-import { QrCode, UserPlus, Users, ScanLine, Building, Mail } from "lucide-react";
+import { ScanLine, Settings, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,69 +13,11 @@ const Index = () => {
             QR Code Feier Check-in
           </h1>
           <p className="text-xl text-white/80">
-            Digitale Gästeverwaltung für deine Veranstaltung
+            Scanner für die Veranstaltung
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {/* Admin-Funktionen */}
-          <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Mail className="h-6 w-6" />
-                Geschäftsemails
-              </CardTitle>
-              <CardDescription className="text-white/70">
-                Berechtigte Geschäftsemails verwalten
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/business-emails">
-                <Button className="w-full bg-white/20 hover:bg-white/30 text-white">
-                  Verwalten
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <QrCode className="h-6 w-6" />
-                Einladungen
-              </CardTitle>
-              <CardDescription className="text-white/70">
-                QR-Codes für Gäste erstellen
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/invitations">
-                <Button className="w-full bg-white/20 hover:bg-white/30 text-white">
-                  Erstellen
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Users className="h-6 w-6" />
-                Gäste
-              </CardTitle>
-              <CardDescription className="text-white/70">
-                Alle Gäste anzeigen und verwalten
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/guests">
-                <Button className="w-full bg-white/20 hover:bg-white/30 text-white">
-                  Anzeigen
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
           {/* Scanner-Funktionen */}
           <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
             <CardHeader>
@@ -110,6 +52,28 @@ const Index = () => {
               <Link to="/scanner-out">
                 <Button className="w-full bg-red-600/60 hover:bg-red-600/70 text-white">
                   Check-Out
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* Admin-Bereich */}
+          <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Settings className="h-6 w-6" />
+                Admin-Bereich
+              </CardTitle>
+              <CardDescription className="text-white/70">
+                Einladungen, Gäste und Einstellungen verwalten
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/admin">
+                <Button className="w-full bg-white/20 hover:bg-white/30 text-white">
+                  Verwalten
                 </Button>
               </Link>
             </CardContent>
