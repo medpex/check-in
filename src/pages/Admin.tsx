@@ -1,5 +1,5 @@
 
-import { QrCode, Users, Mail } from "lucide-react";
+import { QrCode, Users, Mail, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +16,7 @@ const Admin = () => {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
         {/* Geschäftsemails */}
         <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
           <CardHeader>
@@ -32,6 +32,26 @@ const Admin = () => {
             <Link to="/admin/business-emails">
               <Button className="w-full bg-white/20 hover:bg-white/30 text-white">
                 Verwalten
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* SMTP Konfiguration */}
+        <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Settings className="h-6 w-6" />
+              SMTP Config
+            </CardTitle>
+            <CardDescription className="text-white/70">
+              E-Mail Server Einstellungen
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link to="/admin/smtp-config">
+              <Button className="w-full bg-white/20 hover:bg-white/30 text-white">
+                Konfigurieren
               </Button>
             </Link>
           </CardContent>

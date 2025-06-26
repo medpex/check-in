@@ -1,4 +1,3 @@
-
 // API Konfiguration mit vereinfachter Logik
 const getApiUrl = () => {
   // Verwende die Umgebungsvariable falls gesetzt
@@ -17,6 +16,7 @@ export const API_CONFIG = {
     GUESTS: '/guests',
     CHECKINS: '/checkins',
     BUSINESS_EMAILS: '/business-emails',
+    SMTP: '/smtp',
   }
 };
 

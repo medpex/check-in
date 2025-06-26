@@ -13,6 +13,7 @@ import ScannerOut from "./pages/ScannerOut";
 import Guests from "./pages/Guests";
 import Formular from "./pages/Formular";
 import BusinessEmails from "./pages/BusinessEmails";
+import SMTPConfig from "./pages/SMTPConfig";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/admin/invitations" element={<Invitations />} />
             <Route path="/admin/guests" element={<Guests />} />
             <Route path="/admin/business-emails" element={<BusinessEmails />} />
+            <Route path="/admin/smtp-config" element={<SMTPConfig />} />
             <Route path="/scanner-in" element={<ScannerIn />} />
             <Route path="/scanner-out" element={<ScannerOut />} />
             <Route path="/formular" element={<Formular />} />
