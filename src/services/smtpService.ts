@@ -14,70 +14,108 @@ export interface SMTPConfig {
   updated_at?: string;
 }
 
-export interface EmailTemplate {
-  subject: string;
-  html: string;
-  text: string;
-}
-
 class SMTPService {
   async getSMTPConfig(): Promise<SMTPConfig | null> {
-    const response = await fetch(apiUrl('/smtp/config'));
-    if (!response.ok) {
-      if (response.status === 404) {
-        return null;
+    try {
+      console.log('🔗 Fetching SMTP config from:', apiUrl('/smtp/config'));
+      const response = await fetch(apiUrl('/smtp/config'));
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log('📧 No SMTP configuration found');
+          return null;
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      throw new Error('Failed to fetch SMTP configuration');
+      
+      const data = await response.json();
+      console.log('✅ SMTP config loaded successfully');
+      return data;
+    } catch (error) {
+      console.error('❌ Failed to fetch SMTP configuration:', error);
+      throw error;
     }
-    return response.json();
   }
 
   async saveSMTPConfig(config: Omit<SMTPConfig, 'id' | 'created_at' | 'updated_at'>): Promise<SMTPConfig> {
-    const response = await fetch(apiUrl('/smtp/config'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(config),
-    });
+    try {
+      console.log('💾 Saving SMTP config to:', apiUrl('/smtp/config'));
+      const response = await fetch(apiUrl('/smtp/config'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(config),
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to save SMTP configuration');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(`HTTP ${response.status}: ${errorData.error || response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ SMTP config saved successfully');
+      return data;
+    } catch (error) {
+      console.error('❌ Failed to save SMTP configuration:', error);
+      throw error;
     }
-
-    return response.json();
   }
 
   async testSMTPConnection(config: Omit<SMTPConfig, 'id' | 'created_at' | 'updated_at'>): Promise<{ success: boolean; message: string }> {
-    const response = await fetch(apiUrl('/smtp/test'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(config),
-    });
+    try {
+      console.log('🧪 Testing SMTP connection to:', apiUrl('/smtp/test'));
+      const response = await fetch(apiUrl('/smtp/test'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(config),
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to test SMTP connection');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(`HTTP ${response.status}: ${errorData.error || response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('🧪 SMTP test result:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Failed to test SMTP connection:', error);
+      return {
+        success: false,
+        message: `Verbindungstest fehlgeschlagen: ${error.message}`
+      };
     }
-
-    return response.json();
   }
 
-  async sendInvitationEmail(guestId: string, recipientEmail: string): Promise<{ success: boolean; message: string }> {
-    const response = await fetch(apiUrl('/smtp/send-invitation'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ guestId, recipientEmail }),
-    });
+  async sendTestEmail(config: Omit<SMTPConfig, 'id' | 'created_at' | 'updated_at'> & { test_email: string }): Promise<{ success: boolean; message: string }> {
+    try {
+      console.log('📧 Sending test email to:', apiUrl('/smtp/send-test-email'));
+      const response = await fetch(apiUrl('/smtp/send-test-email'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(config),
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to send invitation email');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(`HTTP ${response.status}: ${errorData.error || response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('📧 Test email result:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Failed to send test email:', error);
+      return {
+        success: false,
+        message: `Test-E-Mail-Versand fehlgeschlagen: ${error.message}`
+      };
     }
-
-    return response.json();
   }
 }
 
