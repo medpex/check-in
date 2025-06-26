@@ -63,14 +63,14 @@ async function runMigrations() {
     `);
     console.log('✅ Business Emails Tabelle erstellt/überprüft');
 
-    // SMTP Config Tabelle
+    // SMTP Config Tabelle - Fixed: "user" in Anführungszeichen
     await client.query(`
       CREATE TABLE IF NOT EXISTS smtp_config (
         id SERIAL PRIMARY KEY,
         host VARCHAR(500) NOT NULL,
         port INTEGER NOT NULL,
         secure BOOLEAN NOT NULL DEFAULT false,
-        user VARCHAR(500) NOT NULL,
+        "user" VARCHAR(500) NOT NULL,
         password TEXT NOT NULL,
         from_name VARCHAR(500) NOT NULL,
         from_email VARCHAR(500) NOT NULL,
