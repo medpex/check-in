@@ -95,8 +95,8 @@ router.post('/test', async (req, res) => {
       });
     }
 
-    // Transporter erstellen
-    const transporter = nodemailer.createTransporter({
+    // Transporter erstellen - KORRIGIERT: createTransport statt createTransporter
+    const transporter = nodemailer.createTransport({
       host,
       port: parseInt(port),
       secure: secure === true,
@@ -140,8 +140,8 @@ router.post('/send-test-email', async (req, res) => {
       });
     }
 
-    // Transporter erstellen
-    const transporter = nodemailer.createTransporter({
+    // Transporter erstellen - KORRIGIERT: createTransport statt createTransporter
+    const transporter = nodemailer.createTransport({
       host,
       port: parseInt(port),
       secure: secure === true,
