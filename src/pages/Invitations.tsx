@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { ArrowLeft, Download, QrCode, Plus, Trash2, Mail } from "lucide-react";
+
+import { useState, useMemo } from "react";
+import { ArrowLeft, Download, QrCode, Plus, Trash2, Mail, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,9 +11,22 @@ import { toast } from "sonner";
 const Invitations = () => {
   const [newGuestName, setNewGuestName] = useState("");
   const [newGuestEmail, setNewGuestEmail] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const { data: guests = [], isLoading, error } = useGuests();
   const createGuestMutation = useCreateGuest();
   const deleteGuestMutation = useDeleteGuest();
+
+  const filteredGuests = useMemo(() => {
+    if (!searchTerm || searchTerm.length < 3) {
+      return guests;
+    }
+    
+    const searchLower = searchTerm.toLowerCase();
+    return guests.filter(guest => 
+      guest.name.toLowerCase().includes(searchLower) ||
+      (guest.email && guest.email.toLowerCase().includes(searchLower))
+    );
+  }, [guests, searchTerm]);
 
   const addGuest = async () => {
     if (!newGuestName.trim() || !newGuestEmail.trim()) {
@@ -107,6 +121,31 @@ const Invitations = () => {
         </CardContent>
       </Card>
 
+      <Card className="backdrop-blur-sm bg-white/20 border-white/30 mb-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-white">Alle Einladungen</CardTitle>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 text-white/70 transform -translate-y-1/2" />
+            <Input
+              type="text"
+              placeholder="Nach Name oder E-Mail suchen..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-white/20 border-white/30 text-white placeholder:text-white/70 min-w-[300px]"
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          {searchTerm && searchTerm.length >= 3 && (
+            <div className="mb-4 p-3 bg-white/10 rounded-lg">
+              <p className="text-white/70 text-sm">
+                {filteredGuests.length} von {guests.length} Einladungen gefunden
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {isLoading ? (
         <Card className="backdrop-blur-sm bg-white/20 border-white/30 text-center py-12">
           <CardContent>
@@ -115,66 +154,79 @@ const Invitations = () => {
         </Card>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {guests.map((guest) => (
-            <Card key={guest.id} className="backdrop-blur-sm bg-white/20 border-white/30">
-              <CardHeader className="text-center">
-                <CardTitle className="text-white">{guest.name}</CardTitle>
-                {guest.email && (
-                  <p className="text-white/70 text-sm">{guest.email}</p>
-                )}
-              </CardHeader>
-              <CardContent className="text-center space-y-4">
-                <div className="bg-white p-4 rounded-lg">
-                  <img 
-                    src={guest.qr_code} 
-                    alt={`QR Code für ${guest.name}`}
-                    className="w-full max-w-[200px] mx-auto"
-                  />
-                </div>
-                <Button 
-                  onClick={() => sendEmail(guest)}
-                  className="w-full bg-white/20 hover:bg-white/30 text-white mb-2"
-                >
-                  <Mail className="h-4 w-4 mr-2" />
-                  E-Mail senden
-                </Button>
-                <div className="flex gap-2">
+          {filteredGuests.length === 0 ? (
+            <div className="col-span-full">
+              <Card className="backdrop-blur-sm bg-white/20 border-white/30 text-center py-12">
+                <CardContent>
+                  <QrCode className="h-16 w-16 text-white/50 mx-auto mb-4" />
+                  {searchTerm && searchTerm.length >= 3 ? (
+                    <>
+                      <p className="text-white/70 text-lg">Keine Einladungen gefunden</p>
+                      <p className="text-white/50">
+                        Versuche einen anderen Suchbegriff
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-white/70 text-lg">
+                        Noch keine Einladungen erstellt
+                      </p>
+                      <p className="text-white/50">
+                        Füge deinen ersten Gast hinzu um zu beginnen
+                      </p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            filteredGuests.map((guest) => (
+              <Card key={guest.id} className="backdrop-blur-sm bg-white/20 border-white/30">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-white">{guest.name}</CardTitle>
+                  {guest.email && (
+                    <p className="text-white/70 text-sm">{guest.email}</p>
+                  )}
+                </CardHeader>
+                <CardContent className="text-center space-y-4">
+                  <div className="bg-white p-4 rounded-lg">
+                    <img 
+                      src={guest.qr_code} 
+                      alt={`QR Code für ${guest.name}`}
+                      className="w-full max-w-[200px] mx-auto"
+                    />
+                  </div>
                   <Button 
-                    onClick={() => downloadQRCode(guest)}
-                    className="flex-1 bg-white/20 hover:bg-white/30 text-white"
-                    size="sm"
+                    onClick={() => sendEmail(guest)}
+                    className="w-full bg-white/20 hover:bg-white/30 text-white mb-2"
                   >
-                    <Download className="h-4 w-4 mr-1" />
-                    Download
+                    <Mail className="h-4 w-4 mr-2" />
+                    E-Mail senden
                   </Button>
-                  <Button 
-                    onClick={() => removeGuest(guest.id)}
-                    variant="destructive"
-                    size="sm"
-                    className="bg-red-500/20 hover:bg-red-500/30"
-                    disabled={deleteGuestMutation.isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => downloadQRCode(guest)}
+                      className="flex-1 bg-white/20 hover:bg-white/30 text-white"
+                      size="sm"
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Download
+                    </Button>
+                    <Button 
+                      onClick={() => removeGuest(guest.id)}
+                      variant="destructive"
+                      size="sm"
+                      className="bg-red-500/20 hover:bg-red-500/30"
+                      disabled={deleteGuestMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
-      )}
-
-      {!isLoading && guests.length === 0 && (
-        <Card className="backdrop-blur-sm bg-white/20 border-white/30 text-center py-12">
-          <CardContent>
-            <QrCode className="h-16 w-16 text-white/50 mx-auto mb-4" />
-            <p className="text-white/70 text-lg">
-              Noch keine Einladungen erstellt
-            </p>
-            <p className="text-white/50">
-              Füge deinen ersten Gast hinzu um zu beginnen
-            </p>
-          </CardContent>
-        </Card>
       )}
     </div>
   );
