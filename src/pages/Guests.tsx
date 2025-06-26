@@ -1,14 +1,18 @@
-import { ArrowLeft, Users, CheckCircle, XCircle, Download } from "lucide-react";
+
+import { ArrowLeft, Users, CheckCircle, XCircle, Download, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useGuests, useCheckedInGuests } from "@/hooks/useGuests";
+import { useState, useMemo } from "react";
 
 interface Guest {
   id: string;
   name: string;
-  qrCode: string;
+  email?: string;
+  qr_code: string;
 }
 
 interface CheckedInGuest {
@@ -20,6 +24,19 @@ interface CheckedInGuest {
 const Guests = () => {
   const { data: allGuests = [], isLoading: isLoadingGuests } = useGuests();
   const { data: checkedInGuests = [], isLoading: isLoadingCheckedIn } = useCheckedInGuests();
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredGuests = useMemo(() => {
+    if (!searchTerm || searchTerm.length < 3) {
+      return allGuests;
+    }
+    
+    const searchLower = searchTerm.toLowerCase();
+    return allGuests.filter(guest => 
+      guest.name.toLowerCase().includes(searchLower) ||
+      (guest.email && guest.email.toLowerCase().includes(searchLower))
+    );
+  }, [allGuests, searchTerm]);
 
   const isGuestCheckedIn = (guestId: string) => {
     return checkedInGuests.some(guest => guest.guest_id === guestId);
@@ -31,15 +48,16 @@ const Guests = () => {
   };
 
   const exportGuestList = () => {
-    const data = allGuests.map(guest => ({
+    const data = filteredGuests.map(guest => ({
       name: guest.name,
+      email: guest.email || '',
       status: isGuestCheckedIn(guest.id) ? 'Eingecheckt' : 'Nicht da',
       checkInTime: getCheckInTime(guest.id) || '-'
     }));
 
     const csvContent = "data:text/csv;charset=utf-8," 
-      + "Name,Status,Check-in Zeit\n"
-      + data.map(row => `${row.name},${row.status},${row.checkInTime}`).join("\n");
+      + "Name,Email,Status,Check-in Zeit\n"
+      + data.map(row => `${row.name},${row.email},${row.status},${row.checkInTime}`).join("\n");
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -53,6 +71,8 @@ const Guests = () => {
   const checkedInCount = checkedInGuests.length;
   const totalCount = allGuests.length;
   const notCheckedInCount = totalCount - checkedInCount;
+  const filteredCheckedInCount = filteredGuests.filter(guest => isGuestCheckedIn(guest.id)).length;
+  const filteredNotCheckedInCount = filteredGuests.length - filteredCheckedInCount;
 
   if (isLoadingGuests || isLoadingCheckedIn) {
     return (
@@ -107,28 +127,64 @@ const Guests = () => {
         <Card className="backdrop-blur-sm bg-white/20 border-white/30">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white">Alle Gäste</CardTitle>
-            <Button 
-              onClick={exportGuestList}
-              className="bg-white/20 hover:bg-white/30 text-white"
-              size="sm"
-              disabled={allGuests.length === 0}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Exportieren
-            </Button>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 text-white/70 transform -translate-y-1/2" />
+                <Input
+                  type="text"
+                  placeholder="Nach Name oder E-Mail suchen..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-white/20 border-white/30 text-white placeholder:text-white/70 min-w-[300px]"
+                />
+              </div>
+              <Button 
+                onClick={exportGuestList}
+                className="bg-white/20 hover:bg-white/30 text-white"
+                size="sm"
+                disabled={filteredGuests.length === 0}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Exportieren
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            {allGuests.length === 0 ? (
+            {searchTerm && searchTerm.length >= 3 && (
+              <div className="mb-4 p-3 bg-white/10 rounded-lg">
+                <p className="text-white/70 text-sm">
+                  {filteredGuests.length} von {totalCount} Gästen gefunden
+                  {filteredGuests.length > 0 && (
+                    <span className="ml-2">
+                      ({filteredCheckedInCount} eingecheckt, {filteredNotCheckedInCount} nicht da)
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
+            
+            {filteredGuests.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="h-16 w-16 text-white/30 mx-auto mb-4" />
-                <p className="text-white/70 text-lg">Keine Gäste gefunden</p>
-                <p className="text-white/50">
-                  Gehe zu "Einladungen erstellen" um Gäste hinzuzufügen
-                </p>
+                {searchTerm && searchTerm.length >= 3 ? (
+                  <>
+                    <p className="text-white/70 text-lg">Keine Gäste gefunden</p>
+                    <p className="text-white/50">
+                      Versuche einen anderen Suchbegriff
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-white/70 text-lg">Keine Gäste gefunden</p>
+                    <p className="text-white/50">
+                      Gehe zu "Einladungen erstellen" um Gäste hinzuzufügen
+                    </p>
+                  </>
+                )}
               </div>
             ) : (
               <div className="space-y-3">
-                {allGuests.map((guest) => {
+                {filteredGuests.map((guest) => {
                   const isCheckedIn = isGuestCheckedIn(guest.id);
                   const checkInTime = getCheckInTime(guest.id);
                   
@@ -145,6 +201,9 @@ const Guests = () => {
                         )}
                         <div>
                           <p className="text-white font-medium text-lg">{guest.name}</p>
+                          {guest.email && (
+                            <p className="text-white/60 text-sm">{guest.email}</p>
+                          )}
                           {checkInTime && (
                             <p className="text-white/70 text-sm">
                               Eingecheckt: {checkInTime}
