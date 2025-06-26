@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Mail, Plus, Trash2, Building, AlertCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, Mail, Plus, Trash2, Building, AlertCircle, RefreshCw, Send } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBusinessEmails, useAddBusinessEmail, useDeleteBusinessEmail } from "@/hooks/useBusinessEmails";
+import { useSendBusinessInviteEmail } from "@/hooks/useSMTP";
 import { testApiConnection } from "@/config/api";
 import { toast } from "sonner";
 import BusinessEmailCSVImport from "@/components/BusinessEmailCSVImport";
@@ -21,6 +22,7 @@ const BusinessEmails = () => {
   const { data: businessEmails = [], isLoading, error, refetch } = useBusinessEmails();
   const addEmailMutation = useAddBusinessEmail();
   const deleteEmailMutation = useDeleteBusinessEmail();
+  const sendBusinessInviteEmail = useSendBusinessInviteEmail();
 
   useEffect(() => {
     // Teste Verbindung beim ersten Laden
@@ -143,6 +145,10 @@ const BusinessEmails = () => {
 
   const removeBusinessEmail = (id: number) => {
     deleteEmailMutation.mutate(id);
+  };
+
+  const handleSendInvite = (businessEmail: string) => {
+    sendBusinessInviteEmail.mutate(businessEmail);
   };
 
   if (error) {
@@ -316,19 +322,30 @@ const BusinessEmails = () => {
                   )}
                 </CardHeader>
                 <CardContent>
-                  <div className="flex justify-between items-center">
+                  <div className="space-y-2">
                     <p className="text-white/50 text-xs">
                       {new Date(businessEmail.created_at).toLocaleDateString('de-DE')}
                     </p>
-                    <Button 
-                      onClick={() => removeBusinessEmail(businessEmail.id)}
-                      variant="destructive"
-                      size="sm"
-                      className="bg-red-500/20 hover:bg-red-500/30"
-                      disabled={deleteEmailMutation.isPending || connectionStatus === 'failed' || isImportingCSV}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={() => handleSendInvite(businessEmail.email)}
+                        size="sm"
+                        className="flex-1 bg-green-500/20 hover:bg-green-500/30 text-white"
+                        disabled={sendBusinessInviteEmail.isPending || connectionStatus === 'failed' || isImportingCSV}
+                      >
+                        <Send className="h-4 w-4 mr-1" />
+                        Einladen
+                      </Button>
+                      <Button 
+                        onClick={() => removeBusinessEmail(businessEmail.id)}
+                        variant="destructive"
+                        size="sm"
+                        className="bg-red-500/20 hover:bg-red-500/30"
+                        disabled={deleteEmailMutation.isPending || connectionStatus === 'failed' || isImportingCSV}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

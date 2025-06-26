@@ -63,3 +63,39 @@ export const useSendInvitationEmail = () => {
     },
   });
 };
+
+export const useSendBusinessInviteEmail = () => {
+  return useMutation({
+    mutationFn: (businessEmail: string) => 
+      smtpService.sendBusinessInviteEmail(businessEmail),
+    onSuccess: (result: EmailResponse) => {
+      if (result.success) {
+        toast.success('Geschäfts-E-Mail erfolgreich versendet!');
+      } else {
+        toast.error(`E-Mail-Versand fehlgeschlagen: ${result.message}`);
+      }
+    },
+    onError: (error) => {
+      console.error('Error sending business invite email:', error);
+      toast.error('Fehler beim Versenden der Geschäfts-E-Mail');
+    },
+  });
+};
+
+export const useSendQRCodeEmail = () => {
+  return useMutation({
+    mutationFn: ({ guestId, recipientEmail }: { guestId: string; recipientEmail: string }) => 
+      smtpService.sendQRCodeEmail(guestId, recipientEmail),
+    onSuccess: (result: EmailResponse) => {
+      if (result.success) {
+        toast.success('QR-Code-E-Mail erfolgreich versendet!');
+      } else {
+        toast.error(`E-Mail-Versand fehlgeschlagen: ${result.message}`);
+      }
+    },
+    onError: (error) => {
+      console.error('Error sending QR code email:', error);
+      toast.error('Fehler beim Versenden der QR-Code-E-Mail');
+    },
+  });
+};

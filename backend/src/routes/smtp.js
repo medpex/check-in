@@ -449,4 +449,268 @@ Diese E-Mail wurde automatisch generiert von der QR Scanner Party App.
   }
 });
 
+// Geschäfts-Einladungs-E-Mail senden
+router.post('/send-business-invite', async (req, res) => {
+  let client;
+  try {
+    console.log('📧 Geschäfts-Einladungs-E-Mail - Request erhalten');
+    const { businessEmail } = req.body;
+
+    if (!businessEmail) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Geschäfts-E-Mail-Adresse ist erforderlich' 
+      });
+    }
+
+    // Datenbankverbindung herstellen
+    client = await pool.connect();
+    
+    // SMTP-Konfiguration aus der Datenbank laden
+    const configResult = await client.query('SELECT * FROM smtp_config ORDER BY created_at DESC LIMIT 1');
+    
+    if (configResult.rows.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Keine SMTP-Konfiguration gefunden. Bitte konfigurieren Sie zuerst die E-Mail-Einstellungen.' 
+      });
+    }
+
+    const config = configResult.rows[0];
+    
+    // SMTP-Transporter erstellen
+    const transporter = nodemailer.createTransporter({
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+      auth: {
+        user: config.user,
+        pass: config.password
+      }
+    });
+
+    // E-Mail-Inhalt erstellen
+    const mailOptions = {
+      from: `"${config.from_name}" <${config.from_email}>`,
+      to: businessEmail,
+      subject: 'Einladung zur Party-Registrierung',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #333; text-align: center;">Sie sind eingeladen! 🎉</h2>
+          
+          <p style="font-size: 16px; color: #555;">
+            Hallo,
+          </p>
+          
+          <p style="font-size: 16px; color: #555;">
+            Sie sind herzlich zu unserer Party eingeladen! Bitte registrieren Sie sich über den unten stehenden Link.
+          </p>
+          
+          <div style="text-align: center; margin: 30px 0; padding: 20px; background-color: #f9f9f9; border-radius: 10px;">
+            <h3 style="color: #333; margin-bottom: 15px;">Zur Registrierung:</h3>
+            <a href="https://check-in.home-ki.eu/formular" 
+               style="display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Jetzt registrieren
+            </a>
+          </div>
+          
+          <div style="background-color: #e7f3ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h4 style="color: #1976d2; margin-top: 0;">Wichtige Informationen:</h4>
+            <ul style="color: #555; margin: 10px 0; padding-left: 20px;">
+              <li>Verwenden Sie diese Geschäfts-E-Mail-Adresse für die Registrierung</li>
+              <li>Nach der Registrierung erhalten Sie Ihren persönlichen QR-Code</li>
+              <li>Bei Fragen wende Sie sich an das Event-Team</li>
+            </ul>
+          </div>
+          
+          <p style="font-size: 16px; color: #555; text-align: center; margin-top: 30px;">
+            Wir freuen uns auf Sie! 🎊
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+          
+          <p style="font-size: 12px; color: #999; text-align: center;">
+            Diese E-Mail wurde automatisch generiert von der QR Scanner Party App.
+          </p>
+        </div>
+      `,
+      text: `
+Hallo,
+
+Sie sind herzlich zu unserer Party eingeladen!
+
+Bitte registrieren Sie sich über diesen Link: https://check-in.home-ki.eu/formular
+
+Wichtige Informationen:
+- Verwenden Sie diese Geschäfts-E-Mail-Adresse für die Registrierung
+- Nach der Registrierung erhalten Sie Ihren persönlichen QR-Code
+- Bei Fragen wende Sie sich an das Event-Team
+
+Wir freuen uns auf Sie!
+
+---
+Diese E-Mail wurde automatisch generiert von der QR Scanner Party App.
+      `
+    };
+
+    // E-Mail senden
+    await transporter.sendMail(mailOptions);
+
+    console.log('✅ Geschäfts-Einladungs-E-Mail erfolgreich versendet an:', businessEmail);
+    
+    res.json({ 
+      success: true, 
+      message: 'Geschäfts-Einladungs-E-Mail erfolgreich versendet!' 
+    });
+    
+  } catch (error) {
+    console.error('❌ Fehler beim Senden der Geschäfts-Einladungs-E-Mail:', error);
+    res.json({ 
+      success: false, 
+      message: `Geschäfts-E-Mail-Versand fehlgeschlagen: ${error.message}` 
+    });
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+});
+
+// QR-Code-E-Mail senden
+router.post('/send-qr-code', async (req, res) => {
+  let client;
+  try {
+    console.log('📧 QR-Code-E-Mail - Request erhalten');
+    const { guestId, recipientEmail } = req.body;
+
+    if (!guestId || !recipientEmail) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Gast-ID und E-Mail-Adresse sind erforderlich' 
+      });
+    }
+
+    // Datenbankverbindung herstellen
+    client = await pool.connect();
+    
+    // SMTP-Konfiguration aus der Datenbank laden
+    const configResult = await client.query('SELECT * FROM smtp_config ORDER BY created_at DESC LIMIT 1');
+    
+    if (configResult.rows.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Keine SMTP-Konfiguration gefunden. Bitte konfigurieren Sie zuerst die E-Mail-Einstellungen.' 
+      });
+    }
+
+    const config = configResult.rows[0];
+    
+    // Gast-Daten aus der Datenbank laden
+    const guestResult = await client.query('SELECT * FROM guests WHERE id = $1', [guestId]);
+    
+    if (guestResult.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Gast nicht gefunden' 
+      });
+    }
+
+    const guest = guestResult.rows[0];
+    
+    // SMTP-Transporter erstellen
+    const transporter = nodemailer.createTransporter({
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+      auth: {
+        user: config.user,
+        pass: config.password
+      }
+    });
+
+    // E-Mail-Inhalt erstellen
+    const mailOptions = {
+      from: `"${config.from_name}" <${config.from_email}>`,
+      to: recipientEmail,
+      subject: `QR Code für ${guest.name} - Party Check-in`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #333; text-align: center;">QR Code für die Party 🎉</h2>
+          
+          <p style="font-size: 16px; color: #555;">
+            Hallo,
+          </p>
+          
+          <p style="font-size: 16px; color: #555;">
+            hier ist der QR-Code für <strong>${guest.name}</strong> für den Check-in bei unserer Party.
+          </p>
+          
+          <div style="text-align: center; margin: 30px 0; padding: 20px; background-color: #f9f9f9; border-radius: 10px;">
+            <h3 style="color: #333; margin-bottom: 15px;">QR-Code für ${guest.name}:</h3>
+            <img src="${guest.qr_code}" alt="QR Code für ${guest.name}" style="max-width: 200px; height: auto;" />
+            <p style="margin-top: 10px; font-size: 14px; color: #777;">
+              Zeige diesen QR-Code beim Check-in vor
+            </p>
+          </div>
+          
+          <div style="background-color: #e7f3ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h4 style="color: #1976d2; margin-top: 0;">Wichtige Informationen:</h4>
+            <ul style="color: #555; margin: 10px 0; padding-left: 20px;">
+              <li>Bringe diesen QR-Code auf dem Handy mit</li>
+              <li>Der QR-Code ist der persönliche Einlass für ${guest.name}</li>
+              <li>Bei Fragen wende dich an das Event-Team</li>
+            </ul>
+          </div>
+          
+          <p style="font-size: 16px; color: #555; text-align: center; margin-top: 30px;">
+            Wir freuen uns auf euch! 🎊
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+          
+          <p style="font-size: 12px; color: #999; text-align: center;">
+            Diese E-Mail wurde automatisch generiert von der QR Scanner Party App.
+          </p>
+        </div>
+      `,
+      text: `
+Hallo,
+
+hier ist der QR-Code für ${guest.name} für den Check-in bei unserer Party.
+
+Wichtige Informationen:
+- Bringe diesen QR-Code auf dem Handy mit
+- Der QR-Code ist der persönliche Einlass für ${guest.name}
+- Bei Fragen wende dich an das Event-Team
+
+Wir freuen uns auf euch!
+
+---
+Diese E-Mail wurde automatisch generiert von der QR Scanner Party App.
+      `
+    };
+
+    // E-Mail senden
+    await transporter.sendMail(mailOptions);
+
+    console.log('✅ QR-Code-E-Mail erfolgreich versendet an:', recipientEmail);
+    
+    res.json({ 
+      success: true, 
+      message: 'QR-Code-E-Mail erfolgreich versendet!' 
+    });
+    
+  } catch (error) {
+    console.error('❌ Fehler beim Senden der QR-Code-E-Mail:', error);
+    res.json({ 
+      success: false, 
+      message: `QR-Code-E-Mail-Versand fehlgeschlagen: ${error.message}` 
+    });
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+});
+
 module.exports = router;

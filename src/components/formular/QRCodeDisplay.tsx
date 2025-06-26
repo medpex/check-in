@@ -1,14 +1,21 @@
 
 import { Mail } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GuestResponse } from "@/services/formularService";
+import { EmailInputDialog } from "./EmailInputDialog";
+import { useSendQRCodeEmail } from "@/hooks/useSMTP";
 
 interface QRCodeDisplayProps {
   mainGuest: GuestResponse;
 }
 
 export const QRCodeDisplay = ({ mainGuest }: QRCodeDisplayProps) => {
+  const sendQRCodeEmail = useSendQRCodeEmail();
+
+  const handleSendQRCode = (email: string) => {
+    sendQRCodeEmail.mutate({ guestId: mainGuest.id, recipientEmail: email });
+  };
+
   return (
     <Card className="backdrop-blur-sm bg-white/20 border-white/30 max-w-md mx-auto mb-8">
       <CardHeader>
@@ -31,13 +38,14 @@ export const QRCodeDisplay = ({ mainGuest }: QRCodeDisplayProps) => {
         <p className="text-white/80 text-sm">
           Name: {mainGuest?.name}
         </p>
-        <Button 
-          className="w-full bg-white/20 hover:bg-white/30 text-white"
-          disabled
-        >
-          <Mail className="h-4 w-4 mr-2" />
-          QR Code per Email senden (kommt bald)
-        </Button>
+        <EmailInputDialog
+          onSendEmail={handleSendQRCode}
+          isLoading={sendQRCodeEmail.isPending}
+          buttonText="QR Code per Email senden"
+          dialogTitle="QR Code per E-Mail senden"
+          emailLabel="E-Mail-Adresse"
+          emailPlaceholder="ihre@email.com"
+        />
       </CardContent>
     </Card>
   );

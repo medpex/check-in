@@ -150,6 +150,62 @@ class SMTPService {
       };
     }
   }
+
+  async sendBusinessInviteEmail(businessEmail: string): Promise<EmailResponse> {
+    try {
+      console.log('📧 Sending business invite email to:', apiUrl('/smtp/send-business-invite'));
+      const response = await fetch(apiUrl('/smtp/send-business-invite'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ businessEmail }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(`HTTP ${response.status}: ${errorData.error || response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('📧 Business invite email result:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Failed to send business invite email:', error);
+      return {
+        success: false,
+        message: `Geschäfts-E-Mail-Versand fehlgeschlagen: ${error.message}`
+      };
+    }
+  }
+
+  async sendQRCodeEmail(guestId: string, recipientEmail: string): Promise<EmailResponse> {
+    try {
+      console.log('📧 Sending QR code email to:', apiUrl('/smtp/send-qr-code'));
+      const response = await fetch(apiUrl('/smtp/send-qr-code'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ guestId, recipientEmail }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(`HTTP ${response.status}: ${errorData.error || response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('📧 QR code email result:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Failed to send QR code email:', error);
+      return {
+        success: false,
+        message: `QR-Code-E-Mail-Versand fehlgeschlagen: ${error.message}`
+      };
+    }
+  }
 }
 
 export const smtpService = new SMTPService();
