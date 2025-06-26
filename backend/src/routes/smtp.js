@@ -1,4 +1,3 @@
-
 const express = require('express');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
@@ -29,16 +28,40 @@ router.get('/config', async (req, res) => {
   }
 });
 
-// SMTP-Konfiguration speichern
+// SMTP-Konfiguration speichern - VERBESSERT
 router.post('/config', async (req, res) => {
   try {
     console.log('📧 SMTP Config - POST Request erhalten:', { ...req.body, password: '***' });
     const { host, port, secure, user, password, from_name, from_email } = req.body;
 
-    // Validierung
+    // Erweiterte Validierung
     if (!host || !port || !user || !password || !from_name || !from_email) {
       console.log('❌ SMTP Config - Validierungsfehler: Fehlende Felder');
-      return res.status(400).json({ error: 'Alle Felder sind erforderlich' });
+      return res.status(400).json({ 
+        error: 'Alle Felder sind erforderlich',
+        missing_fields: {
+          host: !host,
+          port: !port,
+          user: !user,
+          password: !password,
+          from_name: !from_name,
+          from_email: !from_email
+        }
+      });
+    }
+
+    // Port validierung
+    const portNum = parseInt(port);
+    if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
+      console.log('❌ SMTP Config - Ungültiger Port:', port);
+      return res.status(400).json({ error: 'Port muss eine Zahl zwischen 1 und 65535 sein' });
+    }
+
+    // E-Mail validierung
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(from_email)) {
+      console.log('❌ SMTP Config - Ungültige E-Mail:', from_email);
+      return res.status(400).json({ error: 'Ungültige Absender-E-Mail-Adresse' });
     }
 
     // Passwort verschlüsseln
@@ -50,35 +73,46 @@ router.post('/config', async (req, res) => {
 
     let result;
     if (existingConfig.rows.length > 0) {
-      console.log('📧 SMTP Config - Update existierende Konfiguration');
+      console.log('📧 SMTP Config - Update existierende Konfiguration mit ID:', existingConfig.rows[0].id);
       // Update existierende Konfiguration
       result = await pool.query(
         `UPDATE smtp_config 
          SET host = $1, port = $2, secure = $3, user = $4, password = $5, 
              from_name = $6, from_email = $7, updated_at = CURRENT_TIMESTAMP
          WHERE id = $8 
-         RETURNING *`,
-        [host, port, secure, user, hashedPassword, from_name, from_email, existingConfig.rows[0].id]
+         RETURNING id, host, port, secure, user, from_name, from_email, created_at, updated_at`,
+        [host, portNum, secure === true, user, hashedPassword, from_name, from_email, existingConfig.rows[0].id]
       );
+      console.log('📧 SMTP Config - Update Query Result:', result.rows.length, 'Zeilen betroffen');
     } else {
       console.log('📧 SMTP Config - Neue Konfiguration erstellen');
       // Neue Konfiguration erstellen
       result = await pool.query(
         `INSERT INTO smtp_config (host, port, secure, user, password, from_name, from_email)
          VALUES ($1, $2, $3, $4, $5, $6, $7) 
-         RETURNING *`,
-        [host, port, secure, user, hashedPassword, from_name, from_email]
+         RETURNING id, host, port, secure, user, from_name, from_email, created_at, updated_at`,
+        [host, portNum, secure === true, user, hashedPassword, from_name, from_email]
       );
+      console.log('📧 SMTP Config - Insert Query Result:', result.rows.length, 'Zeilen eingefügt');
+    }
+
+    if (result.rows.length === 0) {
+      console.error('❌ SMTP Config - Keine Zeilen zurückgegeben von der Datenbank');
+      return res.status(500).json({ error: 'Datenbank-Operation fehlgeschlagen' });
     }
 
     const savedConfig = result.rows[0];
-    const { password: _, ...safeConfig } = savedConfig;
-
-    console.log('✅ SMTP Config - Erfolgreich gespeichert');
-    res.json(safeConfig);
+    console.log('✅ SMTP Config - Erfolgreich gespeichert mit ID:', savedConfig.id);
+    
+    res.json(savedConfig);
   } catch (error) {
     console.error('❌ Fehler beim Speichern der SMTP-Konfiguration:', error);
-    res.status(500).json({ error: 'Serverfehler beim Speichern der SMTP-Konfiguration', details: error.message });
+    console.error('❌ Error Stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Serverfehler beim Speichern der SMTP-Konfiguration', 
+      details: error.message,
+      code: error.code
+    });
   }
 });
 
