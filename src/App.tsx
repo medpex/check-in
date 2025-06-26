@@ -14,6 +14,7 @@ import Guests from "./pages/Guests";
 import Formular from "./pages/Formular";
 import BusinessEmails from "./pages/BusinessEmails";
 import SMTPConfig from "./pages/SMTPConfig";
+import Ueber from "./pages/Ueber";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/ueber" element={<Ueber />} />
             <Route path="/admin/invitations" element={<Invitations />} />
             <Route path="/admin/guests" element={<Guests />} />
             <Route path="/admin/business-emails" element={<BusinessEmails />} />
