@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { ArrowLeft, Download, QrCode, Plus, Trash2, Mail, Search } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGuests, useCreateGuest, useDeleteGuest } from "@/hooks/useGuests";
+import { useSendInvitationEmail } from "@/hooks/useSMTP";
 import { toast } from "sonner";
 
 const Invitations = () => {
@@ -15,6 +15,7 @@ const Invitations = () => {
   const { data: guests = [], isLoading, error } = useGuests();
   const createGuestMutation = useCreateGuest();
   const deleteGuestMutation = useDeleteGuest();
+  const sendEmailMutation = useSendInvitationEmail();
 
   const filteredGuests = useMemo(() => {
     if (!searchTerm || searchTerm.length < 3) {
@@ -53,8 +54,15 @@ const Invitations = () => {
   };
 
   const sendEmail = (guest: any) => {
-    // Placeholder für E-Mail Versendung
-    toast.success(`E-Mail an ${guest.name} wird gesendet...`);
+    if (!guest.email) {
+      toast.error('Keine E-Mail-Adresse für diesen Gast hinterlegt');
+      return;
+    }
+
+    sendEmailMutation.mutate({
+      guestId: guest.id,
+      recipientEmail: guest.email
+    });
   };
 
   if (error) {
@@ -199,9 +207,10 @@ const Invitations = () => {
                   <Button 
                     onClick={() => sendEmail(guest)}
                     className="w-full bg-white/20 hover:bg-white/30 text-white mb-2"
+                    disabled={sendEmailMutation.isPending || !guest.email}
                   >
                     <Mail className="h-4 w-4 mr-2" />
-                    E-Mail senden
+                    {sendEmailMutation.isPending ? 'Sende...' : 'E-Mail senden'}
                   </Button>
                   <div className="flex gap-2">
                     <Button 
