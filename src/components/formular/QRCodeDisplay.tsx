@@ -1,8 +1,8 @@
 
 import { Mail } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { GuestResponse } from "@/services/formularService";
-import { EmailInputDialog } from "./EmailInputDialog";
 import { useSendQRCodeEmail } from "@/hooks/useSMTP";
 
 interface QRCodeDisplayProps {
@@ -12,8 +12,13 @@ interface QRCodeDisplayProps {
 export const QRCodeDisplay = ({ mainGuest }: QRCodeDisplayProps) => {
   const sendQRCodeEmail = useSendQRCodeEmail();
 
-  const handleSendQRCode = (email: string) => {
-    sendQRCodeEmail.mutate({ guestId: mainGuest.id, recipientEmail: email });
+  const handleSendQRCode = () => {
+    if (mainGuest.email) {
+      sendQRCodeEmail.mutate({ 
+        guestId: mainGuest.id, 
+        recipientEmail: mainGuest.email 
+      });
+    }
   };
 
   return (
@@ -38,14 +43,16 @@ export const QRCodeDisplay = ({ mainGuest }: QRCodeDisplayProps) => {
         <p className="text-white/80 text-sm">
           Name: {mainGuest?.name}
         </p>
-        <EmailInputDialog
-          onSendEmail={handleSendQRCode}
-          isLoading={sendQRCodeEmail.isPending}
-          buttonText="QR Code per Email senden"
-          dialogTitle="QR Code per E-Mail senden"
-          emailLabel="E-Mail-Adresse"
-          emailPlaceholder="ihre@email.com"
-        />
+        {mainGuest.email && (
+          <Button 
+            onClick={handleSendQRCode}
+            disabled={sendQRCodeEmail.isPending}
+            className="w-full bg-white/20 hover:bg-white/30 text-white border border-white/30"
+          >
+            <Mail className="h-4 w-4 mr-2" />
+            {sendQRCodeEmail.isPending ? "Wird gesendet..." : "QR Code per E-Mail senden"}
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
