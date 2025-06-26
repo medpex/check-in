@@ -1,4 +1,3 @@
-
 const express = require('express');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
@@ -123,7 +122,7 @@ router.post('/config', async (req, res) => {
           host VARCHAR(500) NOT NULL,
           port INTEGER NOT NULL,
           secure BOOLEAN NOT NULL DEFAULT false,
-          user VARCHAR(500) NOT NULL,
+          "user" VARCHAR(500) NOT NULL,
           password TEXT NOT NULL,
           from_name VARCHAR(500) NOT NULL,
           from_email VARCHAR(500) NOT NULL,
@@ -132,6 +131,25 @@ router.post('/config', async (req, res) => {
         )
       `);
       console.log('✅ SMTP Config - Tabelle erstellt');
+      
+      // Trigger für updated_at hinzufügen
+      await client.query(`
+        CREATE OR REPLACE FUNCTION update_smtp_config_updated_at()
+        RETURNS TRIGGER AS $$
+        BEGIN
+            NEW.updated_at = CURRENT_TIMESTAMP;
+            RETURN NEW;
+        END;
+        $$ language 'plpgsql';
+      `);
+      
+      await client.query(`
+        CREATE TRIGGER update_smtp_config_updated_at_trigger
+            BEFORE UPDATE ON smtp_config
+            FOR EACH ROW
+            EXECUTE FUNCTION update_smtp_config_updated_at();
+      `);
+      console.log('✅ SMTP Config - Trigger erstellt');
     }
 
     // Passwort verschlüsseln
@@ -147,19 +165,19 @@ router.post('/config', async (req, res) => {
       // Update existierende Konfiguration
       result = await client.query(
         `UPDATE smtp_config 
-         SET host = $1, port = $2, secure = $3, user = $4, password = $5, 
+         SET host = $1, port = $2, secure = $3, "user" = $4, password = $5, 
              from_name = $6, from_email = $7, updated_at = CURRENT_TIMESTAMP
          WHERE id = $8 
-         RETURNING id, host, port, secure, user, from_name, from_email, created_at, updated_at`,
+         RETURNING id, host, port, secure, "user", from_name, from_email, created_at, updated_at`,
         [host, portNum, secure === true, user, hashedPassword, from_name, from_email, existingConfig.rows[0].id]
       );
     } else {
       console.log('📧 SMTP Config - Neue Konfiguration erstellen');
       // Neue Konfiguration erstellen
       result = await client.query(
-        `INSERT INTO smtp_config (host, port, secure, user, password, from_name, from_email)
+        `INSERT INTO smtp_config (host, port, secure, "user", password, from_name, from_email)
          VALUES ($1, $2, $3, $4, $5, $6, $7) 
-         RETURNING id, host, port, secure, user, from_name, from_email, created_at, updated_at`,
+         RETURNING id, host, port, secure, "user", from_name, from_email, created_at, updated_at`,
         [host, portNum, secure === true, user, hashedPassword, from_name, from_email]
       );
     }
@@ -176,10 +194,14 @@ router.post('/config', async (req, res) => {
   } catch (error) {
     console.error('❌ Fehler beim Speichern der SMTP-Konfiguration:', error);
     console.error('❌ Error Stack:', error.stack);
+    console.error('❌ Error Code:', error.code);
+    console.error('❌ Error Detail:', error.detail);
     res.status(500).json({ 
       error: 'Serverfehler beim Speichern der SMTP-Konfiguration', 
       details: error.message,
-      code: error.code
+      code: error.code,
+      sqlState: error.code,
+      position: error.position
     });
   } finally {
     if (client) {

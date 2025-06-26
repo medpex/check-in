@@ -10,7 +10,8 @@
     "migrate": "node src/scripts/migrate.js",
     "seed": "node src/scripts/seed.js",
     "test-smtp": "node src/scripts/test-smtp.js",
-    "check-db": "node src/scripts/check-database.js"
+    "check-db": "node src/scripts/check-database.js",
+    "fix-smtp": "node src/scripts/fix-smtp-table.js"
   },
   "dependencies": {
     "express": "^4.21.2",
