@@ -1,6 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { smtpService, SMTPConfig, EmailResponse } from '@/services/smtpService';
+import { useUpdateEmailStatus } from '@/hooks/useGuests';
 import { toast } from 'sonner';
 
 export const useSMTPConfig = () => {
@@ -47,12 +48,16 @@ export const useTestSMTPConnection = () => {
 };
 
 export const useSendInvitationEmail = () => {
+  const updateEmailStatus = useUpdateEmailStatus();
+  
   return useMutation({
     mutationFn: ({ guestId, recipientEmail }: { guestId: string; recipientEmail: string }) => 
       smtpService.sendInvitationEmail(guestId, recipientEmail),
-    onSuccess: (result: EmailResponse) => {
+    onSuccess: (result: EmailResponse, variables) => {
       if (result.success) {
         toast.success('Einladungs-E-Mail erfolgreich versendet!');
+        // E-Mail Status aktualisieren
+        updateEmailStatus.mutate({ guestId: variables.guestId, emailSent: true });
       } else {
         toast.error(`E-Mail-Versand fehlgeschlagen: ${result.message}`);
       }

@@ -1,4 +1,3 @@
-
 import { apiUrl, API_CONFIG } from '@/config/api';
 
 export interface Guest {
@@ -9,6 +8,8 @@ export interface Guest {
   main_guest_id?: string;
   guest_type?: 'family' | 'friends';
   created_at?: string;
+  email_sent?: boolean;
+  email_sent_at?: string;
 }
 
 export interface CheckedInGuest {
@@ -77,6 +78,25 @@ class GuestService {
     if (!response.ok) {
       throw new Error('Failed to delete guest');
     }
+  }
+
+  async updateEmailStatus(guestId: string, emailSent: boolean): Promise<Guest> {
+    const response = await fetch(apiUrl(`${API_CONFIG.ENDPOINTS.GUESTS}/${guestId}/email-status`), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        email_sent: emailSent,
+        email_sent_at: emailSent ? new Date().toISOString() : null
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update email status');
+    }
+
+    return response.json();
   }
 
   async checkInGuest(guestId: string, name: string): Promise<CheckedInGuest> {

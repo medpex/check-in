@@ -24,6 +24,18 @@ BEGIN
                    WHERE table_name='guests' AND column_name='guest_type') THEN
         ALTER TABLE guests ADD COLUMN guest_type VARCHAR(50);
     END IF;
+    
+    -- email_sent Spalte hinzufügen
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='guests' AND column_name='email_sent') THEN
+        ALTER TABLE guests ADD COLUMN email_sent BOOLEAN DEFAULT FALSE;
+    END IF;
+    
+    -- email_sent_at Spalte hinzufügen
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='guests' AND column_name='email_sent_at') THEN
+        ALTER TABLE guests ADD COLUMN email_sent_at TIMESTAMP;
+    END IF;
 END $$;
 
 -- Foreign Key Constraint hinzufügen (nur wenn noch nicht vorhanden)
@@ -35,6 +47,8 @@ BEGIN
         FOREIGN KEY (main_guest_id) REFERENCES guests(id) ON DELETE CASCADE;
     END IF;
 END $$;
+
+-- ... keep existing code (Check-ins Tabelle, Berechtigte Geschäftsemails Tabelle, SMTP Konfiguration Tabelle, Trigger, Spalten erweitern)
 
 -- Check-ins Tabelle
 CREATE TABLE IF NOT EXISTS checkins (
@@ -125,6 +139,7 @@ END $$;
 CREATE INDEX IF NOT EXISTS idx_guests_email ON guests(email);
 CREATE INDEX IF NOT EXISTS idx_guests_main_guest_id ON guests(main_guest_id);
 CREATE INDEX IF NOT EXISTS idx_guests_guest_type ON guests(guest_type);
+CREATE INDEX IF NOT EXISTS idx_guests_email_sent ON guests(email_sent);
 CREATE INDEX IF NOT EXISTS idx_checkins_guest_id ON checkins(guest_id);
 CREATE INDEX IF NOT EXISTS idx_checkins_checked_in_at ON checkins(checked_in_at);
 CREATE INDEX IF NOT EXISTS idx_business_emails_email ON business_emails(email);
@@ -139,4 +154,3 @@ ON CONFLICT (email) DO NOTHING;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO qr_scanner_user;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO qr_scanner_user;
 GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO qr_scanner_user;
-

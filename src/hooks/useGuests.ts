@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { guestService, Guest, CheckedInGuest, GetGuestsParams } from '@/services/guestService';
 import { toast } from 'sonner';
@@ -52,6 +51,22 @@ export const useDeleteGuest = () => {
     onError: (error) => {
       console.error('Error deleting guest:', error);
       toast.error('Fehler beim Entfernen des Gastes');
+    },
+  });
+};
+
+export const useUpdateEmailStatus = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ guestId, emailSent }: { guestId: string; emailSent: boolean }) => 
+      guestService.updateEmailStatus(guestId, emailSent),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['guests'] });
+    },
+    onError: (error) => {
+      console.error('Error updating email status:', error);
+      toast.error('Fehler beim Aktualisieren des E-Mail Status');
     },
   });
 };

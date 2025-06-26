@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
   try {
     const { main_guest_id, guest_type } = req.query;
     
-    let query = 'SELECT id, name, email, qr_code, main_guest_id, guest_type, created_at FROM guests';
+    let query = 'SELECT id, name, email, qr_code, main_guest_id, guest_type, created_at, email_sent, email_sent_at FROM guests';
     let params = [];
     let conditions = [];
     
@@ -84,8 +84,8 @@ router.post('/', async (req, res) => {
 
     // Gast in Datenbank speichern
     const result = await pool.query(
-      'INSERT INTO guests (id, name, email, qr_code, main_guest_id, guest_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [guestId, name.trim(), email || null, qrCodeDataUrl, main_guest_id || null, guest_type || null]
+      'INSERT INTO guests (id, name, email, qr_code, main_guest_id, guest_type, email_sent, email_sent_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [guestId, name.trim(), email || null, qrCodeDataUrl, main_guest_id || null, guest_type || null, false, null]
     );
 
     console.log(`✅ Neuer Gast erstellt: ${name} (${guestId})${main_guest_id ? ` - Zusatzgast für ${main_guest_id}` : ''}`);
@@ -93,6 +93,33 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error('Fehler beim Erstellen des Gastes:', error);
     res.status(500).json({ error: 'Fehler beim Erstellen des Gastes' });
+  }
+});
+
+// PATCH /api/guests/:id/email-status - E-Mail Status aktualisieren
+router.patch('/:id/email-status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email_sent, email_sent_at } = req.body;
+
+    // Prüfen ob Gast existiert
+    const checkResult = await pool.query('SELECT id FROM guests WHERE id = $1', [id]);
+    
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Gast nicht gefunden' });
+    }
+
+    // E-Mail Status aktualisieren
+    const result = await pool.query(
+      'UPDATE guests SET email_sent = $1, email_sent_at = $2 WHERE id = $3 RETURNING *',
+      [email_sent, email_sent_at, id]
+    );
+
+    console.log(`📧 E-Mail Status aktualisiert für Gast ${id}: ${email_sent ? 'versendet' : 'nicht versendet'}`);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren des E-Mail Status:', error);
+    res.status(500).json({ error: 'Fehler beim Aktualisieren des E-Mail Status' });
   }
 });
 
