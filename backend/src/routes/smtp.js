@@ -1,3 +1,4 @@
+
 const express = require('express');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
@@ -6,9 +7,28 @@ const router = express.Router();
 
 // SMTP-Konfiguration abrufen
 router.get('/config', async (req, res) => {
+  let client;
   try {
     console.log('📧 SMTP Config - GET Request erhalten');
-    const result = await pool.query('SELECT * FROM smtp_config ORDER BY created_at DESC LIMIT 1');
+    
+    // Datenbankverbindung mit Fehlerbehandlung
+    client = await pool.connect();
+    console.log('📧 SMTP Config - Datenbankverbindung hergestellt');
+    
+    // Prüfen ob Tabelle existiert
+    const tableExists = await client.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'smtp_config'
+      );
+    `);
+    
+    if (!tableExists.rows[0].exists) {
+      console.log('❌ SMTP Config - Tabelle smtp_config existiert nicht');
+      return res.status(404).json({ message: 'SMTP-Konfigurationstabelle nicht gefunden' });
+    }
+    
+    const result = await client.query('SELECT * FROM smtp_config ORDER BY created_at DESC LIMIT 1');
     
     if (result.rows.length === 0) {
       console.log('📧 SMTP Config - Keine Konfiguration gefunden');
@@ -16,7 +36,12 @@ router.get('/config', async (req, res) => {
     }
 
     const config = result.rows[0];
-    console.log('📧 SMTP Config - Konfiguration gefunden:', { host: config.host, port: config.port, user: config.user });
+    console.log('📧 SMTP Config - Konfiguration gefunden:', { 
+      id: config.id, 
+      host: config.host, 
+      port: config.port, 
+      user: config.user 
+    });
     
     // Passwort nicht zurückgeben (aus Sicherheitsgründen)
     const { password, ...safeConfig } = config;
@@ -24,14 +49,28 @@ router.get('/config', async (req, res) => {
     res.json(safeConfig);
   } catch (error) {
     console.error('❌ Fehler beim Abrufen der SMTP-Konfiguration:', error);
-    res.status(500).json({ error: 'Serverfehler beim Abrufen der SMTP-Konfiguration', details: error.message });
+    console.error('❌ Error Stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Serverfehler beim Abrufen der SMTP-Konfiguration', 
+      details: error.message,
+      code: error.code 
+    });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 });
 
-// SMTP-Konfiguration speichern - VERBESSERT
+// SMTP-Konfiguration speichern
 router.post('/config', async (req, res) => {
+  let client;
   try {
-    console.log('📧 SMTP Config - POST Request erhalten:', { ...req.body, password: '***' });
+    console.log('📧 SMTP Config - POST Request erhalten:', { 
+      ...req.body, 
+      password: req.body.password ? '***' : 'undefined' 
+    });
+    
     const { host, port, secure, user, password, from_name, from_email } = req.body;
 
     // Erweiterte Validierung
@@ -64,18 +103,49 @@ router.post('/config', async (req, res) => {
       return res.status(400).json({ error: 'Ungültige Absender-E-Mail-Adresse' });
     }
 
+    // Datenbankverbindung mit Fehlerbehandlung
+    client = await pool.connect();
+    console.log('📧 SMTP Config - Datenbankverbindung für Speichern hergestellt');
+
+    // Prüfen ob Tabelle existiert und ggf. erstellen
+    const tableExists = await client.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'smtp_config'
+      );
+    `);
+    
+    if (!tableExists.rows[0].exists) {
+      console.log('🔧 SMTP Config - Erstelle smtp_config Tabelle...');
+      await client.query(`
+        CREATE TABLE smtp_config (
+          id SERIAL PRIMARY KEY,
+          host VARCHAR(500) NOT NULL,
+          port INTEGER NOT NULL,
+          secure BOOLEAN NOT NULL DEFAULT false,
+          user VARCHAR(500) NOT NULL,
+          password TEXT NOT NULL,
+          from_name VARCHAR(500) NOT NULL,
+          from_email VARCHAR(500) NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      console.log('✅ SMTP Config - Tabelle erstellt');
+    }
+
     // Passwort verschlüsseln
     const hashedPassword = await bcrypt.hash(password, 10);
     console.log('📧 SMTP Config - Passwort verschlüsselt');
 
     // Prüfen ob bereits eine Konfiguration existiert
-    const existingConfig = await pool.query('SELECT id FROM smtp_config ORDER BY created_at DESC LIMIT 1');
+    const existingConfig = await client.query('SELECT id FROM smtp_config ORDER BY created_at DESC LIMIT 1');
 
     let result;
     if (existingConfig.rows.length > 0) {
       console.log('📧 SMTP Config - Update existierende Konfiguration mit ID:', existingConfig.rows[0].id);
       // Update existierende Konfiguration
-      result = await pool.query(
+      result = await client.query(
         `UPDATE smtp_config 
          SET host = $1, port = $2, secure = $3, user = $4, password = $5, 
              from_name = $6, from_email = $7, updated_at = CURRENT_TIMESTAMP
@@ -83,17 +153,15 @@ router.post('/config', async (req, res) => {
          RETURNING id, host, port, secure, user, from_name, from_email, created_at, updated_at`,
         [host, portNum, secure === true, user, hashedPassword, from_name, from_email, existingConfig.rows[0].id]
       );
-      console.log('📧 SMTP Config - Update Query Result:', result.rows.length, 'Zeilen betroffen');
     } else {
       console.log('📧 SMTP Config - Neue Konfiguration erstellen');
       // Neue Konfiguration erstellen
-      result = await pool.query(
+      result = await client.query(
         `INSERT INTO smtp_config (host, port, secure, user, password, from_name, from_email)
          VALUES ($1, $2, $3, $4, $5, $6, $7) 
          RETURNING id, host, port, secure, user, from_name, from_email, created_at, updated_at`,
         [host, portNum, secure === true, user, hashedPassword, from_name, from_email]
       );
-      console.log('📧 SMTP Config - Insert Query Result:', result.rows.length, 'Zeilen eingefügt');
     }
 
     if (result.rows.length === 0) {
@@ -113,6 +181,10 @@ router.post('/config', async (req, res) => {
       details: error.message,
       code: error.code
     });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 });
 
@@ -129,7 +201,7 @@ router.post('/test', async (req, res) => {
       });
     }
 
-    // Transporter erstellen - KORRIGIERT: createTransport statt createTransporter
+    // Transporter erstellen
     const transporter = nodemailer.createTransport({
       host,
       port: parseInt(port),
@@ -138,8 +210,8 @@ router.post('/test', async (req, res) => {
         user,
         pass: password
       },
-      debug: true, // Debug-Modus aktivieren
-      logger: true // Logging aktivieren
+      debug: true,
+      logger: true
     });
 
     console.log('📧 SMTP Test - Transporter erstellt, teste Verbindung...');
@@ -174,7 +246,7 @@ router.post('/send-test-email', async (req, res) => {
       });
     }
 
-    // Transporter erstellen - KORRIGIERT: createTransport statt createTransporter
+    // Transporter erstellen
     const transporter = nodemailer.createTransport({
       host,
       port: parseInt(port),
