@@ -34,8 +34,8 @@ Eine moderne Web-Anwendung zum Verwalten von Gästen und Check-ins bei Veranstal
 
 ```bash
 # Repository klonen
-git clone https://github.com/yourusername/qr-scanner-party-app.git
-cd qr-scanner-party-app
+git clone https://github.com/medpex/check-in.git
+cd check-in
 
 # Setup-Script ausführen (empfohlen)
 chmod +x scripts/setup.sh
