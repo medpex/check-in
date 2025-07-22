@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authService, User, AuthState } from '../services/authService';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null;
@@ -30,6 +31,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   // Benutzer beim Start laden
   useEffect(() => {
@@ -74,11 +76,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
       toast.success('Erfolgreich abgemeldet!');
+      navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
       // Auch bei Fehler den lokalen State zurücksetzen
       setUser(null);
       setIsAuthenticated(false);
+      navigate('/');
     }
   };
 

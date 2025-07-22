@@ -222,10 +222,7 @@ const Landing: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Footer */}
-        <div className="text-center text-white/60">
-          <p>&copy; 2024 QR Scanner Party App. Alle Rechte vorbehalten.</p>
-        </div>
+
       </div>
     </div>
   );
