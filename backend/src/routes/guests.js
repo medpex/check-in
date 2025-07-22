@@ -8,9 +8,8 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Alle Routen erfordern Authentifizierung und Admin-Berechtigung
+// Alle Routen erfordern Authentifizierung
 router.use(authenticateToken);
-router.use(requireAdmin);
 
 // GET /api/guests - Alle Gäste abrufen (mit optionalen Filtern)
 router.get('/', async (req, res) => {
@@ -48,8 +47,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/guests - Neuen Gast erstellen
-router.post('/', async (req, res) => {
+// POST /api/guests - Neuen Gast erstellen (nur Admin)
+router.post('/', requireAdmin, async (req, res) => {
   try {
     const { name, email, main_guest_id, guest_type } = req.body;
 
@@ -124,8 +123,8 @@ router.get('/email-stats', async (req, res) => {
   }
 });
 
-// POST /api/guests/send-all-invitations - Alle ausstehenden Einladungen versenden
-router.post('/send-all-invitations', async (req, res) => {
+// POST /api/guests/send-all-invitations - Alle ausstehenden Einladungen versenden (nur Admin)
+router.post('/send-all-invitations', requireAdmin, async (req, res) => {
   let client;
   try {
     client = await pool.connect();
@@ -185,8 +184,8 @@ router.post('/send-all-invitations', async (req, res) => {
   }
 });
 
-// PATCH /api/guests/:id/email-status - E-Mail Status aktualisieren
-router.patch('/:id/email-status', async (req, res) => {
+// PATCH /api/guests/:id/email-status - E-Mail Status aktualisieren (nur Admin)
+router.patch('/:id/email-status', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { email_sent, email_sent_at } = req.body;
@@ -212,8 +211,8 @@ router.patch('/:id/email-status', async (req, res) => {
   }
 });
 
-// DELETE /api/guests/:id - Gast löschen
-router.delete('/:id', async (req, res) => {
+// DELETE /api/guests/:id - Gast löschen (nur Admin)
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 

@@ -1,12 +1,18 @@
 
 import { QrCode, Users, Mail, Settings, LogOut, User, UserPlus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "../contexts/AuthContext";
 
 const Admin = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-8 sm:mb-12">
@@ -26,7 +32,7 @@ const Admin = () => {
               <p className="font-semibold text-sm sm:text-base">{user?.username}</p>
             </div>
             <Button
-              onClick={logout}
+              onClick={handleLogout}
               variant="outline"
               className="bg-white/20 hover:bg-white/30 text-white border-white/30 text-xs sm:text-sm px-2 sm:px-4"
             >

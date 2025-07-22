@@ -6,9 +6,8 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Alle Routen erfordern Authentifizierung und Admin-Berechtigung
+// Alle Routen erfordern Authentifizierung
 router.use(authenticateToken);
-router.use(requireAdmin);
 
 // GET /api/checkins - Alle eingecheckten Gäste abrufen
 router.get('/', async (req, res) => {
@@ -54,7 +53,7 @@ router.post('/', async (req, res) => {
 
     if (existingCheckin.rows.length > 0) {
       console.log('❌ Gast bereits eingecheckt:', guest_id);
-      return res.status(409).json({ error: 'Guest already checked in' });
+      return res.status(409).json({ message: `${name} ist bereits eingecheckt!` });
     }
     console.log('✅ Gast noch nicht eingecheckt');
 
@@ -93,7 +92,7 @@ router.delete('/:guest_id', async (req, res) => {
     );
 
     if (checkResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Guest not checked in' });
+      return res.status(404).json({ message: 'Gast ist nicht eingecheckt!' });
     }
 
     const guestName = checkResult.rows[0].guest_name;

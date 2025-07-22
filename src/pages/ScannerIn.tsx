@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { ArrowLeft, CheckCircle, LogOut, User } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CheckInScanner } from "@/components/scanner/CheckInScanner";
 import { LastScannedCard } from "@/components/scanner/LastScannedCard";
@@ -16,7 +16,13 @@ interface ScannedGuest {
 
 const ScannerIn = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [lastScanned, setLastScanned] = useState<ScannedGuest | null>(null);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   const handleScanResult = (guest: ScannedGuest) => {
     setLastScanned(guest);
@@ -44,7 +50,7 @@ const ScannerIn = () => {
               <p className="font-semibold text-sm sm:text-base">{user?.username}</p>
             </div>
             <Button
-              onClick={logout}
+              onClick={handleLogout}
               variant="outline"
               className="bg-white/20 hover:bg-white/30 text-white border-white/30 text-xs sm:text-sm px-2 sm:px-4"
             >

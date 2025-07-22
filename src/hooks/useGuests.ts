@@ -92,8 +92,8 @@ export const useCheckInGuest = () => {
       toast.success(`${checkedInGuest.name} erfolgreich eingecheckt!`);
     },
     onError: (error) => {
-      if (error.message === 'Guest already checked in') {
-        toast.warning('Gast ist bereits eingecheckt!');
+      if (error.message.includes('ist bereits eingecheckt')) {
+        toast.warning(error.message);
       } else {
         console.error('Error checking in guest:', error);
         toast.error('Fehler beim Einchecken');
@@ -112,8 +112,8 @@ export const useCheckOutGuest = () => {
       toast.success('Gast erfolgreich ausgecheckt!');
     },
     onError: (error) => {
-      if (error.message === 'Guest not checked in') {
-        toast.warning('Gast ist nicht eingecheckt!');
+      if (error.message.includes('ist nicht eingecheckt')) {
+        toast.warning(error.message);
       } else {
         console.error('Error checking out guest:', error);
         toast.error('Fehler beim Auschecken');

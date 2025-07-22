@@ -22,7 +22,7 @@ async function fetchAPI(url: string, options?: RequestInit) {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ message: 'Ein unerwarteter Fehler ist aufgetreten' }));
     console.log('🔍 Error response:', errorData);
-    throw new Error(errorData.message || 'API-Anfrage fehlgeschlagen');
+    throw new Error(errorData.message || errorData.error || 'API-Anfrage fehlgeschlagen');
   }
   return response.json();
 }
