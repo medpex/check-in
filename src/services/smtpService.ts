@@ -126,10 +126,12 @@ class SMTPService {
   async sendInvitationEmail(guestId: string, recipientEmail: string): Promise<EmailResponse> {
     try {
       console.log('📧 Sending invitation email to:', apiUrl('/smtp/send-invitation'));
+      const token = localStorage.getItem('authToken');
       const response = await fetch(apiUrl('/smtp/send-invitation'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
         },
         body: JSON.stringify({ guestId, recipientEmail }),
       });
@@ -154,10 +156,12 @@ class SMTPService {
   async sendBusinessInviteEmail(businessEmail: string): Promise<EmailResponse> {
     try {
       console.log('📧 Sending business invite email to:', apiUrl('/smtp/send-business-invite'));
+      const token = localStorage.getItem('authToken');
       const response = await fetch(apiUrl('/smtp/send-business-invite'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
         },
         body: JSON.stringify({ businessEmail }),
       });
@@ -182,10 +186,12 @@ class SMTPService {
   async sendQRCodeEmail(guestId: string, recipientEmail: string): Promise<EmailResponse> {
     try {
       console.log('📧 Sending QR code email to:', apiUrl('/smtp/send-qr-code'));
+      const token = localStorage.getItem('authToken');
       const response = await fetch(apiUrl('/smtp/send-qr-code'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
         },
         body: JSON.stringify({ guestId, recipientEmail }),
       });
