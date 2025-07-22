@@ -301,17 +301,17 @@ const Settings: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
         {/* Header mit Zurück-Button */}
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
           <Link to="/admin">
             <Button variant="outline" size="icon" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </Link>
           <div className="text-center flex-1">
-            <h1 className="text-4xl font-bold text-white mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 sm:mb-4">
               Einstellungen
             </h1>
-            <p className="text-xl text-white/80">
+            <p className="text-lg sm:text-xl text-white/80">
               SMTP, Passwort und System-Einstellungen
             </p>
           </div>

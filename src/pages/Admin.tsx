@@ -9,35 +9,36 @@ const Admin = () => {
   const { user, logout } = useAuth();
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="text-center mb-12">
-        <div className="flex justify-between items-center mb-8">
-          <div></div>
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-white mb-4">
+      <div className="text-center mb-8 sm:mb-12">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
+          <div className="sm:hidden"></div>
+          <div className="text-center order-2 sm:order-1">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2 sm:mb-4">
               Admin-Bereich
             </h1>
-            <p className="text-xl text-white/80">
+            <p className="text-lg sm:text-xl text-white/80">
               Verwaltung des Check-in Systems
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 order-1 sm:order-2">
             <div className="text-right text-white">
-              <p className="text-sm">Angemeldet als</p>
-              <p className="font-semibold">{user?.username}</p>
+              <p className="text-xs sm:text-sm">Angemeldet als</p>
+              <p className="font-semibold text-sm sm:text-base">{user?.username}</p>
             </div>
             <Button
               onClick={logout}
               variant="outline"
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30 text-xs sm:text-sm px-2 sm:px-4"
             >
-              <LogOut className="h-4 w-4 mr-2" />
-              Abmelden
+              <LogOut className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Abmelden</span>
+              <span className="sm:hidden">Logout</span>
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto mb-6 sm:mb-8">
         {/* Geschäftsemails */}
         <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
           <CardHeader>

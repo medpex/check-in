@@ -40,14 +40,14 @@ const Login: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700 flex flex-col">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-[80vh]">
+        <div className="flex items-center justify-center min-h-[80vh] px-4">
         <div className="w-full max-w-md">
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-white mb-4">
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">
               Admin Login
             </h1>
-            <p className="text-xl text-white/80">
+            <p className="text-lg sm:text-xl text-white/80">
               QR Scanner Party App
             </p>
           </div>
