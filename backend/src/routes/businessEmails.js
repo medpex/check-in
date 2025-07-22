@@ -6,7 +6,31 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Alle Routen erfordern Authentifizierung und Admin-Berechtigung
+// GET /api/business-emails/email-stats - Statistik versendeter Geschäftseinladungen (öffentlich)
+router.get('/email-stats', async (req, res) => {
+  try {
+    console.log('📊 Business-Email-Statistiken werden abgerufen...');
+    
+    const totalResult = await pool.query(
+      'SELECT COUNT(*) FROM business_emails WHERE email IS NOT NULL'
+    );
+    const totalEmails = parseInt(totalResult.rows[0].count, 10);
+    
+    const sentResult = await pool.query(
+      'SELECT COUNT(*) FROM business_emails WHERE email_sent = TRUE'
+    );
+    const sentEmails = parseInt(sentResult.rows[0].count, 10);
+    
+    console.log(`📊 Business-Email-Statistiken: ${sentEmails} von ${totalEmails} versendet`);
+    
+    res.json({ totalEmails, sentEmails });
+  } catch (error) {
+    console.error('Fehler beim Abrufen der Business-Email-Statistiken:', error);
+    res.status(500).json({ error: 'Fehler beim Abrufen der Business-Email-Statistiken' });
+  }
+});
+
+// Alle anderen Routen erfordern Authentifizierung und Admin-Berechtigung
 router.use(authenticateToken);
 router.use(requireAdmin);
 
@@ -110,35 +134,25 @@ router.post('/verify', async (req, res) => {
   }
 });
 
-// GET /api/business-emails/email-stats - Statistik versendeter Geschäftseinladungen
-router.get('/email-stats', async (req, res) => {
-  try {
-    const totalResult = await pool.query(
-      'SELECT COUNT(*) FROM business_emails WHERE email IS NOT NULL'
-    );
-    const totalEmails = parseInt(totalResult.rows[0].count, 10);
-    const sentResult = await pool.query(
-      'SELECT COUNT(*) FROM business_emails WHERE email_sent = TRUE'
-    );
-    const sentEmails = parseInt(sentResult.rows[0].count, 10);
-    res.json({ totalEmails, sentEmails });
-  } catch (error) {
-    console.error('Fehler beim Abrufen der Business-Email-Statistiken:', error);
-    res.status(500).json({ error: 'Fehler beim Abrufen der Business-Email-Statistiken' });
-  }
-});
+
 
 // POST /api/business-emails/send-all-invitations - Alle ausstehenden Geschäftseinladungen versenden
 router.post('/send-all-invitations', async (req, res) => {
+  console.log('📧 Massenversand der Geschäftseinladungen gestartet...');
   let client;
   try {
+    console.log('🔗 Verbinde zur Datenbank...');
     client = await pool.connect();
+    console.log('✅ Datenbankverbindung hergestellt');
     // Geschäftsemails abrufen, die noch keine Einladung erhalten haben
+    console.log('📊 Suche nach ausstehenden Geschäftsemails...');
     const emailsResult = await client.query(
       'SELECT * FROM business_emails WHERE email_sent = FALSE AND email IS NOT NULL'
     );
     const emailsToSend = emailsResult.rows;
+    console.log(`📊 Gefunden: ${emailsToSend.length} ausstehende Geschäftsemails`);
     if (emailsToSend.length === 0) {
+      console.log('📊 Keine ausstehenden Geschäftseinladungen gefunden');
       return res.status(200).json({ message: 'Keine ausstehenden Geschäftseinladungen zum Versenden.' });
     }
     // SMTP-Konfiguration abrufen

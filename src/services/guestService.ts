@@ -1,13 +1,24 @@
 const API_URL = '/api';
 
 async function fetchAPI(url: string, options?: RequestInit) {
-  const response = await fetch(url, options);
-    if (!response.ok) {
+  const token = localStorage.getItem('authToken');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` }),
+    ...(options?.headers as Record<string, string> || {})
+  };
+
+  const response = await fetch(url, {
+    ...options,
+    headers
+  });
+  
+  if (!response.ok) {
     const errorData = await response.json().catch(() => ({ message: 'Ein unerwarteter Fehler ist aufgetreten' }));
     throw new Error(errorData.message || 'API-Anfrage fehlgeschlagen');
-    }
-    return response.json();
   }
+  return response.json();
+}
 
 export const getGuests = async () => {
   return fetchAPI(`${API_URL}/guests`);
