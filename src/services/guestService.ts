@@ -8,13 +8,20 @@ async function fetchAPI(url: string, options?: RequestInit) {
     ...(options?.headers as Record<string, string> || {})
   };
 
+  console.log('🔍 fetchAPI called for:', url);
+  console.log('🔍 Headers:', headers);
+  console.log('🔍 Token present:', !!token);
+
   const response = await fetch(url, {
     ...options,
     headers
   });
   
+  console.log('🔍 Response status:', response.status);
+  
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ message: 'Ein unerwarteter Fehler ist aufgetreten' }));
+    console.log('🔍 Error response:', errorData);
     throw new Error(errorData.message || 'API-Anfrage fehlgeschlagen');
   }
   return response.json();
@@ -59,10 +66,17 @@ export const updateEmailStatus = async (guestId: string, emailSent: boolean) => 
 };
 
 export const checkInGuest = async (guestId: string, name: string) => {
-  return fetchAPI(`${API_URL}/checkins`, {
+  console.log('🔍 checkInGuest called with:', { guestId, name });
+  const token = localStorage.getItem('authToken');
+  console.log('🔍 Token from localStorage:', token ? 'Token exists' : 'No token found');
+  
+  const result = await fetchAPI(`${API_URL}/checkins`, {
       method: 'POST',
     body: JSON.stringify({ guest_id: guestId, name, timestamp: new Date().toISOString() }),
     });
+  
+  console.log('🔍 checkInGuest result:', result);
+  return result;
 };
 
 export const checkOutGuest = async (guestId: string) => {
