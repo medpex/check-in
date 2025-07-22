@@ -1,18 +1,21 @@
 
-import { ArrowLeft, Users, CheckCircle, XCircle, Download, Search } from "lucide-react";
+import { ArrowLeft, Users, CheckCircle, XCircle, Download, Search, Send } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useGuests, useCheckedInGuests } from "@/hooks/useGuests";
-import { useState, useMemo } from "react";
+import { getEmailStats, sendAllInvitations } from "@/services/guestService";
+import { useState, useMemo, useEffect } from "react";
+import { toast } from "sonner";
 
 interface Guest {
   id: string;
   name: string;
   email?: string;
   qr_code: string;
+  email_sent: boolean;
 }
 
 interface CheckedInGuest {
@@ -22,9 +25,38 @@ interface CheckedInGuest {
 }
 
 const Guests = () => {
-  const { data: allGuests = [], isLoading: isLoadingGuests } = useGuests();
-  const { data: checkedInGuests = [], isLoading: isLoadingCheckedIn } = useCheckedInGuests();
+  const { data: allGuests = [], isLoading: isLoadingGuests, refetch: refetchGuests }: any = useGuests();
+  const { data: checkedInGuests = [], isLoading: isLoadingCheckedIn }: any = useCheckedInGuests();
   const [searchTerm, setSearchTerm] = useState("");
+  const [emailStats, setEmailStats] = useState({ totalEmails: 0, sentEmails: 0 });
+  const [isSending, setIsSending] = useState(false);
+
+  useEffect(() => {
+    const fetchEmailStats = async () => {
+      try {
+        const stats = await getEmailStats();
+        setEmailStats(stats);
+      } catch (error) {
+        console.error("Fehler beim Abrufen der E-Mail-Statistiken:", error);
+        toast.error("Fehler beim Laden der E-Mail-Statistiken.");
+      }
+    };
+    fetchEmailStats();
+  }, [allGuests]);
+
+  const handleSendAllInvitations = async () => {
+    setIsSending(true);
+    toast.info("Sende alle ausstehenden Einladungen...");
+    try {
+      const response = await sendAllInvitations();
+      toast.success(response.message);
+      refetchGuests(); // Gästeliste neu laden, um den E-Mail-Status zu aktualisieren
+    } catch (error) {
+      toast.error("Fehler beim Senden der Einladungen.");
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   const filteredGuests = useMemo(() => {
     if (!searchTerm || searchTerm.length < 3) {
@@ -73,6 +105,7 @@ const Guests = () => {
   const notCheckedInCount = totalCount - checkedInCount;
   const filteredCheckedInCount = filteredGuests.filter(guest => isGuestCheckedIn(guest.id)).length;
   const filteredNotCheckedInCount = filteredGuests.length - filteredCheckedInCount;
+  const pendingEmails = emailStats.totalEmails - emailStats.sentEmails;
 
   if (isLoadingGuests || isLoadingCheckedIn) {
     return (
@@ -101,7 +134,7 @@ const Guests = () => {
           </h1>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card className="backdrop-blur-sm bg-white/20 border-white/30 text-center">
             <CardContent className="pt-6">
               <div className="text-3xl font-bold text-white mb-2">{totalCount}</div>
@@ -122,6 +155,13 @@ const Guests = () => {
               <div className="text-white/80">Nicht da</div>
             </CardContent>
           </Card>
+
+          <Card className="backdrop-blur-sm bg-blue-500/20 border-blue-400/30 text-center">
+            <CardContent className="pt-6">
+              <div className="text-3xl font-bold text-white mb-2">{emailStats.sentEmails} / {emailStats.totalEmails}</div>
+              <div className="text-white/80">Einladungen versendet</div>
+            </CardContent>
+          </Card>
         </div>
 
         <Card className="backdrop-blur-sm bg-white/20 border-white/30">
@@ -138,6 +178,17 @@ const Guests = () => {
                   className="pl-10 bg-white/20 border-white/30 text-white placeholder:text-white/70 min-w-[300px]"
                 />
               </div>
+              {pendingEmails > 0 && (
+                <Button
+                  onClick={handleSendAllInvitations}
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                  size="sm"
+                  disabled={isSending}
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  {isSending ? `Sende (${pendingEmails})...` : `Alle ${pendingEmails} Einladungen senden`}
+                </Button>
+              )}
               <Button 
                 onClick={exportGuestList}
                 className="bg-white/20 hover:bg-white/30 text-white"
@@ -202,7 +253,12 @@ const Guests = () => {
                         <div>
                           <p className="text-white font-medium text-lg">{guest.name}</p>
                           {guest.email && (
+                            <div className="flex items-center gap-2">
                             <p className="text-white/60 text-sm">{guest.email}</p>
+                              <Badge variant={guest.email_sent ? "default" : "secondary"}>
+                                {guest.email_sent ? "Gesendet" : "Ausstehend"}
+                              </Badge>
+                            </div>
                           )}
                           {checkInTime && (
                             <p className="text-white/70 text-sm">

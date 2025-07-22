@@ -11,8 +11,9 @@ interface LayoutProps {
 export const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const isScanner = location.pathname.includes('/scanner-');
+  const isLogin = location.pathname.includes('/login');
 
-  if (isScanner) {
+  if (isScanner || isLogin) {
     return <>{children}</>;
   }
 

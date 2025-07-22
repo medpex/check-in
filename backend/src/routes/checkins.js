@@ -2,8 +2,13 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/database');
+const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Alle Routen erfordern Authentifizierung und Admin-Berechtigung
+router.use(authenticateToken);
+router.use(requireAdmin);
 
 // GET /api/checkins - Alle eingecheckten Gäste abrufen
 router.get('/', async (req, res) => {

@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import Invitations from "./pages/Invitations";
@@ -13,7 +15,8 @@ import ScannerOut from "./pages/ScannerOut";
 import Guests from "./pages/Guests";
 import Formular from "./pages/Formular";
 import BusinessEmails from "./pages/BusinessEmails";
-import SMTPConfig from "./pages/SMTPConfig";
+import Settings from "./pages/Settings";
+import Login from "./pages/Login";
 import Ueber from "./pages/Ueber";
 import NotFound from "./pages/NotFound";
 
@@ -24,23 +27,26 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/ueber" element={<Ueber />} />
-            <Route path="/admin/invitations" element={<Invitations />} />
-            <Route path="/admin/guests" element={<Guests />} />
-            <Route path="/admin/business-emails" element={<BusinessEmails />} />
-            <Route path="/admin/smtp-config" element={<SMTPConfig />} />
-            <Route path="/scanner-in" element={<ScannerIn />} />
-            <Route path="/scanner-out" element={<ScannerOut />} />
-            <Route path="/formular" element={<Formular />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+              <Route path="/admin/ueber" element={<ProtectedRoute><Ueber /></ProtectedRoute>} />
+              <Route path="/admin/invitations" element={<ProtectedRoute><Invitations /></ProtectedRoute>} />
+              <Route path="/admin/guests" element={<ProtectedRoute><Guests /></ProtectedRoute>} />
+              <Route path="/admin/business-emails" element={<ProtectedRoute><BusinessEmails /></ProtectedRoute>} />
+              <Route path="/admin/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/scanner-in" element={<ScannerIn />} />
+              <Route path="/scanner-out" element={<ScannerOut />} />
+              <Route path="/formular" element={<Formular />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Layout>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

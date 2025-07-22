@@ -1,21 +1,31 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { guestService, Guest, CheckedInGuest, GetGuestsParams } from '@/services/guestService';
+import { 
+  getGuests, 
+  getCheckedInGuests, 
+  createGuest as createGuestService,
+  deleteGuest as deleteGuestService,
+  updateEmailStatus as updateEmailStatusService,
+  checkInGuest as checkInGuestService,
+  checkOutGuest as checkOutGuestService,
+} from '@/services/guestService';
 import { toast } from 'sonner';
 
-export const useGuests = (params?: GetGuestsParams) => {
-  return useQuery({
-    queryKey: ['guests', params],
-    queryFn: () => guestService.getAllGuests(params),
+export const useGuests = () => {
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['guests'],
+    queryFn: getGuests,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+  return { data, isLoading, refetch };
 };
 
 export const useCheckedInGuests = () => {
-  return useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['checkedInGuests'],
-    queryFn: () => guestService.getCheckedInGuests(),
+    queryFn: getCheckedInGuests,
     staleTime: 30 * 1000, // 30 seconds
   });
+  return { data, isLoading, refetch };
 };
 
 export const useCreateGuest = () => {
@@ -27,7 +37,7 @@ export const useCreateGuest = () => {
       email: string; 
       mainGuestId?: string; 
       guestType?: 'family' | 'friends' 
-    }) => guestService.createGuest(name, email, mainGuestId, guestType),
+    }) => createGuestService(name, email, mainGuestId, guestType),
     onSuccess: (newGuest) => {
       queryClient.invalidateQueries({ queryKey: ['guests'] });
       toast.success(`Einladung für ${newGuest.name} erstellt!`);
@@ -43,7 +53,7 @@ export const useDeleteGuest = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (guestId: string) => guestService.deleteGuest(guestId),
+    mutationFn: (guestId: string) => deleteGuestService(guestId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guests'] });
       toast.success('Gast entfernt');
@@ -60,7 +70,7 @@ export const useUpdateEmailStatus = () => {
   
   return useMutation({
     mutationFn: ({ guestId, emailSent }: { guestId: string; emailSent: boolean }) => 
-      guestService.updateEmailStatus(guestId, emailSent),
+      updateEmailStatusService(guestId, emailSent),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guests'] });
     },
@@ -76,7 +86,7 @@ export const useCheckInGuest = () => {
   
   return useMutation({
     mutationFn: ({ guestId, name }: { guestId: string; name: string }) => 
-      guestService.checkInGuest(guestId, name),
+      checkInGuestService(guestId, name),
     onSuccess: (checkedInGuest) => {
       queryClient.invalidateQueries({ queryKey: ['checkedInGuests'] });
       toast.success(`${checkedInGuest.name} erfolgreich eingecheckt!`);
@@ -96,7 +106,7 @@ export const useCheckOutGuest = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (guestId: string) => guestService.checkOutGuest(guestId),
+    mutationFn: (guestId: string) => checkOutGuestService(guestId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['checkedInGuests'] });
       toast.success('Gast erfolgreich ausgecheckt!');

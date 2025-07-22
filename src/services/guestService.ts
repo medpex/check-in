@@ -1,149 +1,74 @@
-import { apiUrl, API_CONFIG } from '@/config/api';
+const API_URL = '/api';
 
-export interface Guest {
-  id: string;
-  name: string;
-  email?: string;
-  qr_code: string;
-  main_guest_id?: string;
-  guest_type?: 'family' | 'friends';
-  created_at?: string;
-  email_sent?: boolean;
-  email_sent_at?: string;
-}
-
-export interface CheckedInGuest {
-  id: string;
-  guest_id: string;
-  name: string;
-  timestamp: string;
-}
-
-export interface GetGuestsParams {
-  main_guest_id?: string;
-  guest_type?: 'family' | 'friends';
-}
-
-class GuestService {
-  async createGuest(name: string, email?: string, mainGuestId?: string, guestType?: 'family' | 'friends'): Promise<Guest> {
-    const response = await fetch(apiUrl(API_CONFIG.ENDPOINTS.GUESTS), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        name, 
-        email, 
-        main_guest_id: mainGuestId,
-        guest_type: guestType
-      }),
-    });
-
+async function fetchAPI(url: string, options?: RequestInit) {
+  const response = await fetch(url, options);
     if (!response.ok) {
-      throw new Error('Failed to create guest');
+    const errorData = await response.json().catch(() => ({ message: 'Ein unerwarteter Fehler ist aufgetreten' }));
+    throw new Error(errorData.message || 'API-Anfrage fehlgeschlagen');
     }
-
     return response.json();
   }
 
-  async getAllGuests(params?: GetGuestsParams): Promise<Guest[]> {
-    let url = apiUrl(API_CONFIG.ENDPOINTS.GUESTS);
-    
-    // Add query parameters if provided
-    if (params && (params.main_guest_id || params.guest_type)) {
-      const searchParams = new URLSearchParams();
-      if (params.main_guest_id) {
-        searchParams.append('main_guest_id', params.main_guest_id);
-      }
-      if (params.guest_type) {
-        searchParams.append('guest_type', params.guest_type);
-      }
-      url += `?${searchParams.toString()}`;
-    }
-    
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch guests');
-    }
+export const getGuests = async () => {
+  return fetchAPI(`${API_URL}/guests`);
+};
 
-    return response.json();
-  }
+export const getCheckedInGuests = async () => {
+  return fetchAPI(`${API_URL}/checkins`);
+};
 
-  async deleteGuest(guestId: string): Promise<void> {
-    const response = await fetch(apiUrl(`${API_CONFIG.ENDPOINTS.GUESTS}/${guestId}`), {
+export const getEmailStats = async () => {
+  return fetchAPI(`${API_URL}/guests/email-stats`);
+};
+
+export const sendAllInvitations = async () => {
+  return fetchAPI(`${API_URL}/guests/send-all-invitations`, {
+    method: 'POST',
+  });
+};
+
+export const createGuest = async (name: string, email?: string, mainGuestId?: string, guestType?: 'family' | 'friends') => {
+  return fetchAPI(`${API_URL}/guests`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, main_guest_id: mainGuestId, guest_type: guestType }),
+  });
+};
+
+export const deleteGuest = async (guestId: string) => {
+  return fetchAPI(`${API_URL}/guests/${guestId}`, {
       method: 'DELETE',
     });
+};
 
-    if (!response.ok) {
-      throw new Error('Failed to delete guest');
-    }
-  }
-
-  async updateEmailStatus(guestId: string, emailSent: boolean): Promise<Guest> {
-    const response = await fetch(apiUrl(`${API_CONFIG.ENDPOINTS.GUESTS}/${guestId}/email-status`), {
+export const updateEmailStatus = async (guestId: string, emailSent: boolean) => {
+  return fetchAPI(`${API_URL}/guests/${guestId}/email-status`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        email_sent: emailSent,
-        email_sent_at: emailSent ? new Date().toISOString() : null
-      }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email_sent: emailSent, email_sent_at: emailSent ? new Date().toISOString() : null }),
     });
+};
 
-    if (!response.ok) {
-      throw new Error('Failed to update email status');
-    }
-
-    return response.json();
-  }
-
-  async checkInGuest(guestId: string, name: string): Promise<CheckedInGuest> {
-    const response = await fetch(apiUrl(API_CONFIG.ENDPOINTS.CHECKINS), {
+export const checkInGuest = async (guestId: string, name: string) => {
+  return fetchAPI(`${API_URL}/checkins`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        guest_id: guestId, 
-        name,
-        timestamp: new Date().toISOString()
-      }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ guest_id: guestId, name, timestamp: new Date().toISOString() }),
     });
+};
 
-    if (!response.ok) {
-      if (response.status === 409) {
-        throw new Error('Guest already checked in');
-      }
-      throw new Error('Failed to check in guest');
-    }
-
-    return response.json();
-  }
-
-  async checkOutGuest(guestId: string): Promise<void> {
-    const response = await fetch(apiUrl(`${API_CONFIG.ENDPOINTS.CHECKINS}/${guestId}`), {
+export const checkOutGuest = async (guestId: string) => {
+  return fetchAPI(`${API_URL}/checkins/${guestId}`, {
       method: 'DELETE',
     });
+};
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error('Guest not checked in');
-      }
-      throw new Error('Failed to check out guest');
-    }
-  }
+export const getBusinessEmailStats = async () => {
+  return fetchAPI(`/api/business-emails/email-stats`);
+};
 
-  async getCheckedInGuests(): Promise<CheckedInGuest[]> {
-    const response = await fetch(apiUrl(API_CONFIG.ENDPOINTS.CHECKINS));
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch checked in guests');
-    }
-
-    return response.json();
-  }
-}
-
-export const guestService = new GuestService();
+export const sendAllBusinessInvitations = async () => {
+  return fetchAPI(`/api/business-emails/send-all-invitations`, {
+    method: 'POST',
+  });
+};

@@ -3,8 +3,14 @@ const express = require('express');
 const QRCode = require('qrcode');
 const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/database');
+const { sendInvitationEmail } = require('../services/emailService'); // Import email service
+const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Alle Routen erfordern Authentifizierung und Admin-Berechtigung
+router.use(authenticateToken);
+router.use(requireAdmin);
 
 // GET /api/guests - Alle Gäste abrufen (mit optionalen Filtern)
 router.get('/', async (req, res) => {
@@ -93,6 +99,89 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error('Fehler beim Erstellen des Gastes:', error);
     res.status(500).json({ error: 'Fehler beim Erstellen des Gastes' });
+  }
+});
+
+// GET /api/guests/email-stats - E-Mail-Statistiken abrufen
+router.get('/email-stats', async (req, res) => {
+  try {
+    // Gesamtzahl der Gäste mit einer E-Mail-Adresse
+    const totalResult = await pool.query(
+      "SELECT COUNT(*) FROM guests WHERE guest_type = 'business' AND email IS NOT NULL"
+    );
+    const totalEmails = parseInt(totalResult.rows[0].count, 10);
+
+    // Anzahl der bereits versendeten E-Mails
+    const sentResult = await pool.query(
+      "SELECT COUNT(*) FROM guests WHERE guest_type = 'business' AND email_sent = TRUE"
+    );
+    const sentEmails = parseInt(sentResult.rows[0].count, 10);
+
+    res.json({ totalEmails, sentEmails });
+  } catch (error) {
+    console.error('Fehler beim Abrufen der E-Mail-Statistiken:', error);
+    res.status(500).json({ error: 'Fehler beim Abrufen der E-Mail-Statistiken' });
+  }
+});
+
+// POST /api/guests/send-all-invitations - Alle ausstehenden Einladungen versenden
+router.post('/send-all-invitations', async (req, res) => {
+  let client;
+  try {
+    client = await pool.connect();
+    
+    // Gäste abrufen, die noch keine E-Mail erhalten haben
+    const guestsResult = await client.query(
+      "SELECT * FROM guests WHERE guest_type = 'business' AND email_sent = FALSE AND email IS NOT NULL"
+    );
+    const guestsToSend = guestsResult.rows;
+
+    if (guestsToSend.length === 0) {
+      return res.status(200).json({ message: 'Keine ausstehenden Einladungen zum Versenden.' });
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+    const errors = [];
+
+    // SMTP-Konfiguration abrufen
+    const configResult = await client.query('SELECT * FROM smtp_config ORDER BY created_at DESC LIMIT 1');
+    if (configResult.rows.length === 0) {
+      return res.status(400).json({ error: 'Keine SMTP-Konfiguration gefunden.' });
+    }
+    const smtpConfig = configResult.rows[0];
+
+    // Über alle Gäste iterieren und E-Mails versenden
+    for (const guest of guestsToSend) {
+      try {
+        await sendInvitationEmail(guest, smtpConfig);
+        
+        // E-Mail-Status in der Datenbank aktualisieren
+        await client.query(
+          'UPDATE guests SET email_sent = TRUE, email_sent_at = CURRENT_TIMESTAMP WHERE id = $1',
+          [guest.id]
+        );
+        successCount++;
+      } catch (error) {
+        errorCount++;
+        errors.push({ guestId: guest.id, error: error.message });
+        console.error(`Fehler beim Senden der E-Mail an ${guest.email}:`, error);
+      }
+    }
+
+    res.status(200).json({
+      message: `${successCount} von ${guestsToSend.length} Einladungen erfolgreich versendet.`,
+      successCount,
+      errorCount,
+      errors,
+    });
+  } catch (error) {
+    console.error('Fehler beim Massenversand der Einladungen:', error);
+    res.status(500).json({ error: 'Fehler beim Massenversand der Einladungen' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 });
 

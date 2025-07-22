@@ -8,6 +8,8 @@ const guestRoutes = require('./routes/guests');
 const checkinRoutes = require('./routes/checkins');
 const businessEmailRoutes = require('./routes/businessEmails');
 const smtpRoutes = require('./routes/smtp');
+const authRoutes = require('./routes/auth');
+const settingsRoutes = require('./routes/settings');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -54,6 +56,8 @@ app.use('/api/guests', guestRoutes);
 app.use('/api/checkins', checkinRoutes);
 app.use('/api/business-emails', businessEmailRoutes);
 app.use('/api/smtp', smtpRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -66,7 +70,9 @@ app.get('/api/health', (req, res) => {
       '/api/guests',
       '/api/checkins', 
       '/api/business-emails',
-      '/api/smtp'
+      '/api/smtp',
+      '/api/auth',
+      '/api/settings'
     ]
   });
 });

@@ -11,7 +11,8 @@
     "seed": "node src/scripts/seed.js",
     "test-smtp": "node src/scripts/test-smtp.js",
     "check-db": "node src/scripts/check-database.js",
-    "fix-smtp": "node src/scripts/fix-smtp-table.js"
+    "fix-smtp": "node src/scripts/fix-smtp-table.js",
+    "create-admin": "node src/scripts/create-admin.js"
   },
   "dependencies": {
     "express": "^4.21.2",
@@ -20,6 +21,7 @@
     "dotenv": "^16.5.0",
     "pg": "^8.16.2",
     "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
     "nodemailer": "^6.10.1",
     "uuid": "^9.0.1",
     "qrcode": "^1.5.4"

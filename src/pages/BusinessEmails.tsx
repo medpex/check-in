@@ -9,6 +9,7 @@ import { useSendBusinessInviteEmail } from "@/hooks/useSMTP";
 import { testApiConnection } from "@/config/api";
 import { toast } from "sonner";
 import BusinessEmailCSVImport from "@/components/BusinessEmailCSVImport";
+import { getBusinessEmailStats, sendAllBusinessInvitations } from '@/services/guestService';
 
 const BusinessEmails = () => {
   const [newEmail, setNewEmail] = useState("");
@@ -18,6 +19,8 @@ const BusinessEmails = () => {
   const [lastConnectionTest, setLastConnectionTest] = useState<number>(0);
   const [isImportingCSV, setIsImportingCSV] = useState(false);
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
+  const [emailStats, setEmailStats] = useState({ totalEmails: 0, sentEmails: 0 });
+  const [isSendingAll, setIsSendingAll] = useState(false);
   
   const { data: businessEmails = [], isLoading, error, refetch } = useBusinessEmails();
   const addEmailMutation = useAddBusinessEmail();
@@ -27,6 +30,7 @@ const BusinessEmails = () => {
   useEffect(() => {
     // Teste Verbindung beim ersten Laden
     testConnection();
+    fetchStats();
   }, []);
 
   // Überwache Fehler beim Laden der Geschäftsemails
@@ -151,6 +155,30 @@ const BusinessEmails = () => {
     sendBusinessInviteEmail.mutate(businessEmail);
   };
 
+  const fetchStats = async () => {
+    try {
+      const stats = await getBusinessEmailStats();
+      setEmailStats(stats);
+    } catch (e) {
+      // Fehler ignorieren, falls Backend noch nicht bereit
+    }
+  };
+
+  const handleSendAllBusinessInvitations = async () => {
+    setIsSendingAll(true);
+    toast.info('Sende alle ausstehenden Geschäftseinladungen...');
+    try {
+      const response = await sendAllBusinessInvitations();
+      toast.success(response.message);
+      fetchStats();
+      refetch();
+    } catch (error) {
+      toast.error('Fehler beim Senden der Geschäftseinladungen.');
+    } finally {
+      setIsSendingAll(false);
+    }
+  };
+
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-600 to-indigo-700 flex items-center justify-center">
@@ -212,8 +240,7 @@ const BusinessEmails = () => {
 
         {/* Verbindungsstatus */}
         <Card className="backdrop-blur-sm bg-white/20 border-white/30 mb-4">
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
+          <CardContent className="pt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded-full ${
                   connectionStatus === 'connected' ? 'bg-green-400' : 
@@ -224,6 +251,21 @@ const BusinessEmails = () => {
                    connectionStatus === 'failed' ? 'Server nicht erreichbar' : 'Verbindung wird getestet...'}
                 </span>
               </div>
+            <div className="flex items-center gap-4">
+              <div className="text-white/80 text-sm">
+                <b>{emailStats.sentEmails} / {emailStats.totalEmails}</b> Einladungen versendet
+              </div>
+              {(emailStats.totalEmails - emailStats.sentEmails > 0) && (
+                <Button
+                  onClick={handleSendAllBusinessInvitations}
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                  size="sm"
+                  disabled={isSendingAll || isTestingConnection || isImportingCSV}
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  {isSendingAll ? `Sende...` : `Alle ausstehenden Einladungen senden`}
+                </Button>
+              )}
               <Button 
                 onClick={testConnection} 
                 disabled={isTestingConnection}
@@ -320,6 +362,12 @@ const BusinessEmails = () => {
                       {businessEmail.company}
                     </p>
                   )}
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${businessEmail.email_sent ? 'bg-green-500/20 text-green-200' : 'bg-yellow-500/20 text-yellow-100'}`}>{businessEmail.email_sent ? 'Gesendet' : 'Ausstehend'}</span>
+                    {businessEmail.email_sent_at && (
+                      <span className="text-xs text-white/50">am {new Date(businessEmail.email_sent_at).toLocaleDateString('de-DE')}</span>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
