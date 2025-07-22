@@ -41,7 +41,6 @@ export const sendAllInvitations = async () => {
 export const createGuest = async (name: string, email?: string, mainGuestId?: string, guestType?: 'family' | 'friends') => {
   return fetchAPI(`${API_URL}/guests`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, email, main_guest_id: mainGuestId, guest_type: guestType }),
   });
 };
@@ -55,7 +54,6 @@ export const deleteGuest = async (guestId: string) => {
 export const updateEmailStatus = async (guestId: string, emailSent: boolean) => {
   return fetchAPI(`${API_URL}/guests/${guestId}/email-status`, {
       method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email_sent: emailSent, email_sent_at: emailSent ? new Date().toISOString() : null }),
     });
 };
@@ -63,7 +61,6 @@ export const updateEmailStatus = async (guestId: string, emailSent: boolean) => 
 export const checkInGuest = async (guestId: string, name: string) => {
   return fetchAPI(`${API_URL}/checkins`, {
       method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ guest_id: guestId, name, timestamp: new Date().toISOString() }),
     });
 };
