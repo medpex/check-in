@@ -9,8 +9,8 @@ async function fetchAPI(url: string, options?: RequestInit) {
   };
 
   console.log('🔍 fetchAPI called for:', url);
-  console.log('🔍 Headers:', headers);
   console.log('🔍 Token present:', !!token);
+  console.log('🔍 Authorization header present:', !!headers.Authorization);
 
   const response = await fetch(url, {
     ...options,
@@ -67,34 +67,10 @@ export const updateEmailStatus = async (guestId: string, emailSent: boolean) => 
 
 export const checkInGuest = async (guestId: string, name: string) => {
   console.log('🔍 checkInGuest called with:', { guestId, name });
-  const token = localStorage.getItem('authToken');
-  console.log('🔍 Token from localStorage:', token ? 'Token exists' : 'No token found');
-  
-  // Direkte fetch-Implementierung ohne fetchAPI
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` })
-  };
-  
-  console.log('🔍 Direct fetch headers:', headers);
-  
-  const response = await fetch(`${API_URL}/checkins`, {
+  return fetchAPI(`${API_URL}/checkins`, {
     method: 'POST',
-    headers,
-    body: JSON.stringify({ guest_id: guestId, name, timestamp: new Date().toISOString() })
+    body: JSON.stringify({ guest_id: guestId, name, timestamp: new Date().toISOString() }),
   });
-  
-  console.log('🔍 Direct fetch response status:', response.status);
-  
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Ein unerwarteter Fehler ist aufgetreten' }));
-    console.log('🔍 Direct fetch error:', errorData);
-    throw new Error(errorData.message || 'API-Anfrage fehlgeschlagen');
-  }
-  
-  const result = await response.json();
-  console.log('🔍 checkInGuest result:', result);
-  return result;
 };
 
 export const checkOutGuest = async (guestId: string) => {
