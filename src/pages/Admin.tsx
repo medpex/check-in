@@ -1,5 +1,5 @@
 
-import { QrCode, Users, Mail, Settings, Info, LogOut, User } from "lucide-react";
+import { QrCode, Users, Mail, Settings, Info, LogOut, User, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,7 +86,7 @@ const Admin = () => {
               Einstellungen
             </CardTitle>
             <CardDescription className="text-white/70">
-              SMTP, Passwort und System-Einstellungen
+              SMTP, Passwort, Benutzer und System-Einstellungen
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -97,6 +97,8 @@ const Admin = () => {
             </Link>
           </CardContent>
         </Card>
+
+
 
         {/* Einladungen */}
         <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">

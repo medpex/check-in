@@ -23,8 +23,13 @@ const Login: React.FC = () => {
 
     setIsLoading(true);
     try {
-      await login(username, password);
-      navigate('/admin');
+      const response = await login(username, password);
+      // Nach erfolgreichem Login je nach Rolle weiterleiten
+      if (response?.user?.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/scanner');
+      }
     } catch (error) {
       // Error wird bereits im AuthContext behandelt
     } finally {

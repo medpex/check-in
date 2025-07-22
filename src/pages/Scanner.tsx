@@ -1,19 +1,38 @@
-
-import { ScanLine } from "lucide-react";
+import { ScanLine, LogOut, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "../contexts/AuthContext";
 
-const Index = () => {
+const Scanner = () => {
+  const { user, logout } = useAuth();
+  
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-white mb-4">
-          Check-in
-        </h1>
-        <p className="text-xl text-white/80">
-          Scanner für die Veranstaltung
-        </p>
+      {/* Header mit Benutzer-Info und Logout */}
+      <div className="flex justify-between items-center mb-8">
+        <div className="text-center flex-1">
+          <h1 className="text-4xl font-bold text-white mb-4">
+            Scanner Dashboard
+          </h1>
+          <p className="text-xl text-white/80">
+            Check-in/Check-out für die Veranstaltung
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-right text-white">
+            <p className="text-sm">Angemeldet als</p>
+            <p className="font-semibold">{user?.username}</p>
+          </div>
+          <Button
+            onClick={logout}
+            variant="outline"
+            className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Abmelden
+          </Button>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
@@ -61,4 +80,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Scanner; 
