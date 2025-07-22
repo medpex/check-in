@@ -1,5 +1,5 @@
 
-import { QrCode, Users, Mail, Settings, Info, LogOut, User, UserPlus } from "lucide-react";
+import { QrCode, Users, Mail, Settings, LogOut, User, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,27 +37,7 @@ const Admin = () => {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mb-8">
-        {/* Über die App */}
-        <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Info className="h-6 w-6" />
-              Über die App
-            </CardTitle>
-            <CardDescription className="text-white/70">
-              Features und Beschreibung der App
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link to="/admin/ueber">
-              <Button className="w-full bg-white/20 hover:bg-white/30 text-white">
-                Anzeigen
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto mb-8">
         {/* Geschäftsemails */}
         <Card className="backdrop-blur-sm bg-white/20 border-white/30 hover:bg-white/25 transition-all">
           <CardHeader>
