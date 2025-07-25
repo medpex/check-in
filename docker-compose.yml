@@ -43,8 +43,8 @@ services:
       # CORS für Hetzner Domain erweitert
       CORS_ORIGIN: "${APP_BASE_URL:-https://check-in.home-ki.eu},http://localhost:8080,http://10.0.0.61:8080,http://127.0.0.1:8080"
       # Zeitbegrenzungslogik
-      TIME_LIMIT_MINUTES: "5"
-      DEVELOPER_TOKEN: ${DEVELOPER_TOKEN:-}
+      TIME_LIMIT_MINUTES: ${TIME_LIMIT_MINUTES:-5}
+      DEVELOPER_TOKEN: ${DEVELOPER_TOKEN:-your_secret_token_here}
     depends_on:
       postgres:
         condition: service_healthy
@@ -69,9 +69,9 @@ services:
       - /app/backend
     environment:
       - NODE_ENV=development
-      # Verwendet die neue HTTPS API-URL
-      - VITE_API_URL=${VITE_API_URL:-${APP_BASE_URL:-https://check-in.home-ki.eu}/api}
+      # App-Konfiguration
       - VITE_APP_BASE_URL=${APP_BASE_URL:-https://check-in.home-ki.eu}
+      - VITE_API_URL=${API_BASE:-${APP_BASE_URL:-https://check-in.home-ki.eu}/api}
     depends_on:
       - backend
     command: npm run dev
@@ -88,8 +88,8 @@ services:
       - "80:80"
     environment:
       - NODE_ENV=production
-      - VITE_API_URL=${APP_BASE_URL:-https://check-in.home-ki.eu}/api
       - VITE_APP_BASE_URL=${APP_BASE_URL:-https://check-in.home-ki.eu}
+      - VITE_API_URL=${API_BASE:-${APP_BASE_URL:-https://check-in.home-ki.eu}/api}
     depends_on:
       - backend
     profiles:
