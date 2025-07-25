@@ -1,17 +1,8 @@
-// API Konfiguration mit vereinfachter Logik
-const getApiUrl = () => {
-  // Verwende die Umgebungsvariable falls gesetzt
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-  
-  // Fallback: Verwende die aktuelle Domain mit Port 3001
-  const hostname = window.location.hostname;
-  return `http://${hostname}:3001/api`;
-};
+import { APP_CONFIG } from './app';
 
+// API Konfiguration mit zentraler App-Konfiguration
 export const API_CONFIG = {
-  BASE_URL: getApiUrl(),
+  BASE_URL: APP_CONFIG.API.BASE_URL,
   ENDPOINTS: {
     GUESTS: '/guests',
     CHECKINS: '/checkins',

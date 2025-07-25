@@ -71,6 +71,17 @@ docker-compose exec backend npm run seed
 - **Admin Login**: admin / admin123
 - **Zeitlimit**: 5 Minuten (konfigurierbar)
 
+### 🔧 Konfiguration
+
+Die App-URL kann einfach angepasst werden:
+
+```bash
+# In der .env Datei oder als Umgebungsvariable
+APP_BASE_URL=https://ihre-domain.de
+```
+
+**Standard**: `https://check-in.home-ki.eu`
+
 ## 🐳 Docker Commands
 
 ### Entwicklung

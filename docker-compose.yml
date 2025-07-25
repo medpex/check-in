@@ -38,8 +38,10 @@ services:
       DB_USER: qr_scanner_user
       DB_PASSWORD: secure_password_123
       PORT: 3001
+      # App-Konfiguration
+      APP_BASE_URL: ${APP_BASE_URL:-https://check-in.home-ki.eu}
       # CORS für Hetzner Domain erweitert
-      CORS_ORIGIN: "https://check-in.home-ki.eu,http://localhost:8080,http://10.0.0.61:8080,http://127.0.0.1:8080"
+      CORS_ORIGIN: "${APP_BASE_URL:-https://check-in.home-ki.eu},http://localhost:8080,http://10.0.0.61:8080,http://127.0.0.1:8080"
       # Zeitbegrenzungslogik
       TIME_LIMIT_MINUTES: "5"
       DEVELOPER_TOKEN: ${DEVELOPER_TOKEN:-}
@@ -68,7 +70,8 @@ services:
     environment:
       - NODE_ENV=development
       # Verwendet die neue HTTPS API-URL
-      - VITE_API_URL=${VITE_API_URL:-https://check-in.home-ki.eu/api}
+      - VITE_API_URL=${VITE_API_URL:-${APP_BASE_URL:-https://check-in.home-ki.eu}/api}
+      - VITE_APP_BASE_URL=${APP_BASE_URL:-https://check-in.home-ki.eu}
     depends_on:
       - backend
     command: npm run dev
@@ -85,7 +88,8 @@ services:
       - "80:80"
     environment:
       - NODE_ENV=production
-      - VITE_API_URL=https://check-in.home-ki.eu/api
+      - VITE_API_URL=${APP_BASE_URL:-https://check-in.home-ki.eu}/api
+      - VITE_APP_BASE_URL=${APP_BASE_URL:-https://check-in.home-ki.eu}
     depends_on:
       - backend
     profiles:

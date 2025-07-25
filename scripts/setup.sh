@@ -23,7 +23,8 @@ echo "✅ Docker und Docker Compose sind installiert"
 # Create environment files if they don't exist
 if [ ! -f .env ]; then
     echo "📝 Erstelle .env Datei..."
-    echo "VITE_API_URL=http://localhost:3001/api" > .env
+    echo "APP_BASE_URL=https://check-in.home-ki.eu" > .env
+    echo "VITE_API_URL=http://localhost:3001/api" >> .env
     echo "TIME_LIMIT_MINUTES=5" >> .env
     echo "DEVELOPER_TOKEN=dev_token_123" >> .env
 fi
@@ -38,6 +39,7 @@ if [ ! -f backend/.env ]; then
     echo "DB_USER=qr_scanner_user" >> backend/.env
     echo "DB_PASSWORD=secure_password_123" >> backend/.env
     echo "PORT=3001" >> backend/.env
+    echo "APP_BASE_URL=https://check-in.home-ki.eu" >> backend/.env
     echo "CORS_ORIGIN=http://localhost:8080" >> backend/.env
     echo "TIME_LIMIT_MINUTES=5" >> backend/.env
     echo "DEVELOPER_TOKEN=dev_token_123" >> backend/.env

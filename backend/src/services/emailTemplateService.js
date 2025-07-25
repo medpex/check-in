@@ -1,4 +1,5 @@
 const pool = require('../config/database');
+const { getFormularUrl } = require('../config/app');
 
 class EmailTemplateService {
   async getFormSettings() {
@@ -36,7 +37,7 @@ class EmailTemplateService {
           
           <div style="text-align: center; margin: 30px 0; padding: 20px; background-color: ${this.getInputBackgroundColor(formSettings.background_color)}; border-radius: 10px; border: 1px solid ${this.getTextColor(formSettings.background_color)}30;">
             <h3 style="color: ${this.getTextColor(formSettings.background_color)}; margin-bottom: 15px;">Zur Registrierung:</h3>
-            <a href="https://check-in.home-ki.eu/formular" 
+            <a href="${getFormularUrl()}" 
                style="display: inline-block; background-color: ${this.getButtonBackgroundColor(formSettings.background_color)}; color: ${this.getTextColor(formSettings.background_color)}; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; border: 1px solid ${this.getTextColor(formSettings.background_color)}30;">
               Jetzt registrieren
             </a>
@@ -67,7 +68,7 @@ Hallo,
 
 Sie sind herzlich zu unserer Party eingeladen!
 
-Bitte registrieren Sie sich über diesen Link: https://check-in.home-ki.eu/formular
+Bitte registrieren Sie sich über diesen Link: ${getFormularUrl()}
 
 Wichtige Informationen:
 - Verwenden Sie diese Geschäfts-E-Mail-Adresse für die Registrierung
