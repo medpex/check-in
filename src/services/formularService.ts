@@ -41,7 +41,7 @@ class FormularService {
   }
 
   async registerMainGuest(request: GuestRegistrationRequest): Promise<GuestResponse> {
-    const response = await fetch(apiUrl('/guests'), {
+    const response = await fetch(apiUrl('/guests/register'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -49,6 +49,7 @@ class FormularService {
       body: JSON.stringify({
         name: request.name,
         email: request.privateEmail,
+        business_email: true, // Markiere als Business-Email für die Registrierung
       }),
     });
 
@@ -60,7 +61,7 @@ class FormularService {
   }
 
   async registerAdditionalGuest(request: AdditionalGuestRequest): Promise<GuestResponse> {
-    const response = await fetch(apiUrl('/guests'), {
+    const response = await fetch(apiUrl('/guests/register'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -70,6 +71,7 @@ class FormularService {
         email: request.email,
         main_guest_id: request.mainGuestId,
         guest_type: request.guestType,
+        business_email: false, // Zusätzliche Gäste sind keine Business-Emails
       }),
     });
 
@@ -87,6 +89,54 @@ class FormularService {
     });
 
     const response = await fetch(apiUrl(`/guests?${params.toString()}`));
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  // E-Mail-Funktionen für Familienmitglieder und Freunde
+  async sendFamilyEmails(mainGuestId: string): Promise<any> {
+    const response = await fetch(apiUrl('/guests/send-family-emails'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ main_guest_id: mainGuestId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async sendFriendEmails(mainGuestId: string): Promise<any> {
+    const response = await fetch(apiUrl('/guests/send-friend-emails'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ main_guest_id: mainGuestId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async sendIndividualEmail(guestId: string): Promise<any> {
+    const response = await fetch(apiUrl(`/guests/${guestId}/send-email`), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

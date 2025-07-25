@@ -222,7 +222,7 @@ CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires
 -- Das Passwort wird mit bcrypt gehashed (Rounds: 10)
 -- Hash für "admin123" mit bcrypt
 INSERT INTO users (username, password_hash, email, role) VALUES 
-    ('admin', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin@example.com', 'admin')
+    ('admin', '$2b$10$.7Go4d1CDFHytkOffsfvkOpCYVZ1uHnQogmT8oPycV3c09SfLNfGe', 'admin@example.com', 'admin')
 ON CONFLICT (username) DO NOTHING;
 
 -- Berechtigungen
@@ -234,3 +234,64 @@ GRANT ALL PRIVILEGES ON SEQUENCE user_sessions_id_seq TO qr_scanner_user;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO qr_scanner_user;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO qr_scanner_user;
 GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO qr_scanner_user;
+
+-- Formular-Einstellungen Tabelle
+CREATE TABLE IF NOT EXISTS form_settings (
+    id SERIAL PRIMARY KEY,
+    background_color VARCHAR(7) DEFAULT '#3B82F6',
+    logo_url TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Trigger für updated_at Spalte in form_settings
+CREATE OR REPLACE FUNCTION update_form_settings_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.triggers WHERE trigger_name = 'update_form_settings_updated_at_trigger') THEN
+        CREATE TRIGGER update_form_settings_updated_at_trigger
+            BEFORE UPDATE ON form_settings
+            FOR EACH ROW
+            EXECUTE FUNCTION update_form_settings_updated_at();
+    END IF;
+END $$;
+
+-- Standard-Einstellungen einfügen
+INSERT INTO form_settings (background_color) VALUES ('#3B82F6')
+ON CONFLICT DO NOTHING;
+
+-- Installations-Info Tabelle für Zeitbegrenzungslogik
+CREATE TABLE IF NOT EXISTS install_info (
+    id SERIAL PRIMARY KEY,
+    installed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    version VARCHAR(50) DEFAULT '1.0.0',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Trigger für updated_at Spalte in install_info
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Trigger für install_info Tabelle
+DROP TRIGGER IF EXISTS update_install_info_updated_at ON install_info;
+CREATE TRIGGER update_install_info_updated_at
+    BEFORE UPDATE ON install_info
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Initialer Eintrag in install_info (nur wenn Tabelle leer ist)
+INSERT INTO install_info (installed_at, version)
+SELECT CURRENT_TIMESTAMP, '1.0.0'
+WHERE NOT EXISTS (SELECT 1 FROM install_info);

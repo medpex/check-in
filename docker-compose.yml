@@ -40,6 +40,9 @@ services:
       PORT: 3001
       # CORS für Hetzner Domain erweitert
       CORS_ORIGIN: "https://check-in.home-ki.eu,http://localhost:8080,http://10.0.0.61:8080,http://127.0.0.1:8080"
+      # Zeitbegrenzungslogik
+      TIME_LIMIT_MINUTES: "5"
+      DEVELOPER_TOKEN: ${DEVELOPER_TOKEN:-}
     depends_on:
       postgres:
         condition: service_healthy

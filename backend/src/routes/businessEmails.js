@@ -3,6 +3,7 @@ const express = require('express');
 const pool = require('../config/database');
 const nodemailer = require('nodemailer');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const emailTemplateService = require('../services/emailTemplateService');
 
 const router = express.Router();
 
@@ -176,35 +177,13 @@ router.post('/send-all-invitations', async (req, res) => {
             pass: smtpConfig.password,
           },
         });
+        // E-Mail-Template mit Formular-Einstellungen verwenden
+        const emailTemplate = await emailTemplateService.generateBusinessInvitationEmail(entry.email);
         const mailOptions = {
           from: `"${smtpConfig.from_name}" <${smtpConfig.from_email}>`,
           to: entry.email,
-          subject: 'Einladung zur Party-Registrierung',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h2 style="color: #333; text-align: center;">Sie sind eingeladen! 🎉</h2>
-              <p style="font-size: 16px; color: #555;">Hallo,</p>
-              <p style="font-size: 16px; color: #555;">Sie sind herzlich zu unserer Party eingeladen! Bitte registrieren Sie sich über den unten stehenden Link.</p>
-              <div style="text-align: center; margin: 30px 0; padding: 20px; background-color: #f9f9f9; border-radius: 10px;">
-                <h3 style="color: #333; margin-bottom: 15px;">Zur Registrierung:</h3>
-                <a href="https://check-in.home-ki.eu/formular" 
-                   style="display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-                  Jetzt registrieren
-                </a>
-              </div>
-              <div style="background-color: #e7f3ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                <h4 style="color: #1976d2; margin-top: 0;">Wichtige Informationen:</h4>
-                <ul style="color: #555; margin: 10px 0; padding-left: 20px;">
-                  <li>Verwenden Sie diese Geschäfts-E-Mail-Adresse für die Registrierung</li>
-                  <li>Nach der Registrierung erhalten Sie Ihren persönlichen QR-Code</li>
-                  <li>Bei Fragen wende Sie sich an das Event-Team</li>
-                </ul>
-              </div>
-              <p style="font-size: 16px; color: #555; text-align: center; margin-top: 30px;">Wir freuen uns auf Sie! 🎊</p>
-              <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
-              <p style="font-size: 12px; color: #999; text-align: center;">Diese E-Mail wurde automatisch generiert von der QR Scanner Party App.</p>
-            </div>
-          `,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
         };
         await transporter.sendMail(mailOptions);
         // Status aktualisieren

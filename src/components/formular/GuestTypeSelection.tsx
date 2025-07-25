@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Users, UserPlus, Trash2, ArrowLeft, Mail } from "lucide-react";
+import { Users, UserPlus, Trash2, ArrowLeft, Mail, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { GuestResponse } from "@/services/formularService";
+import { GuestResponse, formularService } from "@/services/formularService";
 import { useSendQRCodeEmail } from "@/hooks/useSMTP";
+import { toast } from "sonner";
 
 interface GuestTypeSelectionProps {
   guestType: "family" | "friends" | null;
@@ -40,9 +41,48 @@ export const GuestTypeSelection = ({
   onBackToSelection,
 }: GuestTypeSelectionProps) => {
   const sendQRCodeEmail = useSendQRCodeEmail();
+  const [isSendingEmails, setIsSendingEmails] = useState(false);
 
   const handleSendGuestQRCode = (guestId: string, email: string) => {
     sendQRCodeEmail.mutate({ guestId, recipientEmail: email });
+  };
+
+  const handleSendBulkEmails = async () => {
+    if (!guestType || additionalGuests.length === 0) return;
+
+    setIsSendingEmails(true);
+    try {
+      // Hauptgast-ID aus dem ersten Gast extrahieren
+      const mainGuestId = additionalGuests[0]?.main_guest_id;
+      if (!mainGuestId) {
+        toast.error("Hauptgast nicht gefunden");
+        return;
+      }
+
+      let result;
+      if (guestType === 'family') {
+        result = await formularService.sendFamilyEmails(mainGuestId);
+        toast.success(`Familien-E-Mails versendet: ${result.successCount} erfolgreich`);
+      } else if (guestType === 'friends') {
+        result = await formularService.sendFriendEmails(mainGuestId);
+        toast.success(`Freund-E-Mails versendet: ${result.successCount} erfolgreich`);
+      }
+    } catch (error) {
+      console.error('Fehler beim Senden der E-Mails:', error);
+      toast.error("Fehler beim Senden der E-Mails");
+    } finally {
+      setIsSendingEmails(false);
+    }
+  };
+
+  const handleSendIndividualEmail = async (guestId: string) => {
+    try {
+      await formularService.sendIndividualEmail(guestId);
+      toast.success("E-Mail erfolgreich versendet");
+    } catch (error) {
+      console.error('Fehler beim Senden der E-Mail:', error);
+      toast.error("Fehler beim Senden der E-Mail");
+    }
   };
 
   // Zeige Gast-Typ-Auswahl an
@@ -150,7 +190,18 @@ export const GuestTypeSelection = ({
         {/* Liste der hinzugefügten Gäste */}
         {additionalGuests.length > 0 && (
           <div className="space-y-4">
-            <h3 className="text-white font-medium">Hinzugefügte {guestTypeLabel}:</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-white font-medium">Hinzugefügte {guestTypeLabel}:</h3>
+              <Button
+                size="sm"
+                onClick={handleSendBulkEmails}
+                disabled={isSendingEmails}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                {isSendingEmails ? "Sende..." : `Alle ${guestType === "family" ? "Familien" : "Freunde"}-E-Mails`}
+              </Button>
+            </div>
             <div className="space-y-3">
               {additionalGuests.map((guest) => (
                 <Card key={guest.id} className="bg-white/10 border-white/20">
@@ -171,13 +222,24 @@ export const GuestTypeSelection = ({
                             />
                           </div>
                         )}
-                        {/* E-Mail-Button für Freunde - nutzt vorhandene E-Mail */}
+                        {/* E-Mail-Button für alle Gast-Typen */}
+                        <Button
+                          onClick={() => handleSendIndividualEmail(guest.id)}
+                          disabled={isSendingEmails}
+                          size="sm"
+                          className="bg-blue-500/20 border-blue-300 text-blue-300 hover:bg-blue-500/30"
+                          title="E-Mail senden"
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                        {/* QR-Code E-Mail-Button für Freunde */}
                         {guestType === "friends" && (
                           <Button
                             onClick={() => handleSendGuestQRCode(guest.id, guest.email)}
                             disabled={sendQRCodeEmail.isPending}
                             size="sm"
                             className="bg-white/20 hover:bg-white/30 text-white border border-white/30"
+                            title="QR-Code per E-Mail senden"
                           >
                             <Mail className="h-4 w-4" />
                           </Button>
@@ -188,6 +250,7 @@ export const GuestTypeSelection = ({
                           size="sm"
                           className="bg-red-500/20 hover:bg-red-500/30"
                           disabled={isLoading}
+                          title="Gast entfernen"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

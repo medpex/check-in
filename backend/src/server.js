@@ -11,6 +11,13 @@ const smtpRoutes = require('./routes/smtp');
 const authRoutes = require('./routes/auth');
 const settingsRoutes = require('./routes/settings');
 const userRoutes = require('./routes/users');
+const timeLimitRoutes = require('./routes/timeLimit');
+
+// TimeLimit Service importieren
+const timeLimitService = require('./services/timeLimitService');
+const { timeLimitMiddleware, readOnlyMiddleware } = require('./middleware/timeLimitMiddleware');
+const bcrypt = require('bcrypt');
+const pool = require('./config/database');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -52,6 +59,10 @@ app.use((req, res, next) => {
   next();
 });
 
+// TimeLimit Middleware vor allen Routes
+app.use(timeLimitMiddleware);
+app.use(readOnlyMiddleware);
+
 // Routes
 app.use('/api/guests', guestRoutes);
 app.use('/api/checkins', checkinRoutes);
@@ -60,24 +71,42 @@ app.use('/api/smtp', smtpRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/time-limit', timeLimitRoutes);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    version: '1.0.0',
-    cors_origins: corsOrigins,
-    routes: [
-      '/api/guests',
-      '/api/checkins', 
-      '/api/business-emails',
-      '/api/smtp',
-      '/api/auth',
-      '/api/settings',
-      '/api/users'
-    ]
-  });
+app.get('/api/health', async (req, res) => {
+  try {
+    const timeLimitCheck = await timeLimitService.checkTimeLimit();
+    
+    res.json({ 
+      status: 'OK', 
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      cors_origins: corsOrigins,
+      timeLimit: {
+        isExpired: timeLimitCheck.isExpired,
+        message: timeLimitCheck.message,
+        timeRemainingMinutes: Math.floor(timeLimitCheck.timeRemaining / (60 * 1000)),
+        isReadOnly: timeLimitService.isReadOnly()
+      },
+      routes: [
+        '/api/guests',
+        '/api/checkins', 
+        '/api/business-emails',
+        '/api/smtp',
+        '/api/auth',
+        '/api/settings',
+        '/api/users',
+        '/api/time-limit'
+      ]
+    });
+  } catch (error) {
+    console.error('Fehler im Health Check:', error);
+    res.status(500).json({ 
+      status: 'ERROR',
+      message: 'Health check fehlgeschlagen'
+    });
+  }
 });
 
 // Error handling middleware
@@ -95,11 +124,55 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Server läuft auf Port ${PORT}`);
   console.log(`📡 API verfügbar unter http://localhost:${PORT}/api`);
   console.log(`🏥 Health Check: http://localhost:${PORT}/api/health`);
   console.log(`📧 SMTP Routes: http://localhost:${PORT}/api/smtp/*`);
+  console.log(`⏰ TimeLimit Routes: http://localhost:${PORT}/api/time-limit/*`);
+  
+  // Initiale Daten einrichten
+  try {
+    console.log('🔧 Initialisiere Standard-Daten...');
+    
+    // Admin-Benutzer einrichten
+    const existingUser = await pool.query('SELECT id FROM users WHERE username = $1', ['admin']);
+    if (existingUser.rows.length === 0) {
+      const passwordHash = await bcrypt.hash('admin123', 10);
+      await pool.query(
+        'INSERT INTO users (username, password_hash, email, role) VALUES ($1, $2, $3, $4)',
+        ['admin', passwordHash, 'admin@example.com', 'admin']
+      );
+      console.log('✅ Admin-Benutzer erstellt (admin/admin123)');
+    } else {
+      const passwordHash = await bcrypt.hash('admin123', 10);
+      await pool.query('UPDATE users SET password_hash = $1 WHERE username = $2', [passwordHash, 'admin']);
+      console.log('✅ Admin-Passwort zurückgesetzt (admin/admin123)');
+    }
+    
+    // Installationsinfo einrichten
+    const installInfo = await pool.query('SELECT COUNT(*) as count FROM install_info');
+    if (parseInt(installInfo.rows[0].count) === 0) {
+      await pool.query('INSERT INTO install_info (installed_at, version) VALUES (CURRENT_TIMESTAMP, $1)', ['1.0.0']);
+      console.log('✅ Installationsinfo erstellt');
+    }
+    
+    console.log('✅ Initiale Daten erfolgreich eingerichtet');
+  } catch (error) {
+    console.error('❌ Fehler beim Einrichten der initialen Daten:', error);
+  }
+  
+  // Initiale Zeitbegrenzungsprüfung beim Serverstart
+  try {
+    const timeLimitCheck = await timeLimitService.checkTimeLimit();
+    console.log(`⏰ Zeitbegrenzungsstatus: ${timeLimitCheck.message}`);
+    
+    if (timeLimitCheck.isExpired) {
+      console.log(`⚠️  WARNUNG: Zeitbegrenzung überschritten! Anwendung läuft im Read-Only Modus.`);
+    }
+  } catch (error) {
+    console.error('❌ Fehler bei der initialen Zeitbegrenzungsprüfung:', error);
+  }
 });
 
 module.exports = app;

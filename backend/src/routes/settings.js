@@ -4,7 +4,83 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Alle Routen erfordern Authentifizierung und Admin-Berechtigung
+// Formular-Einstellungen Routen (ohne Authentifizierung - für öffentliche Formulare)
+router.get('/form', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM form_settings ORDER BY created_at DESC LIMIT 1');
+    res.json(result.rows[0] || { background_color: '#3B82F6', logo_url: null });
+  } catch (error) {
+    res.status(500).json({ error: 'Fehler beim Abrufen der Formular-Einstellungen.' });
+  }
+});
+
+// Formular-Einstellungen speichern (erfordert Admin-Berechtigung)
+router.post('/form', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { background_color, logo_url } = req.body;
+    if (!background_color) return res.status(400).json({ error: 'Hintergrundfarbe ist erforderlich.' });
+
+    const existing = await pool.query('SELECT id FROM form_settings LIMIT 1');
+    if (existing.rows.length > 0) {
+      await pool.query(
+        `UPDATE form_settings SET background_color = $1, logo_url = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3`,
+        [background_color, logo_url, existing.rows[0].id]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO form_settings (background_color, logo_url) VALUES ($1, $2)`,
+        [background_color, logo_url]
+      );
+    }
+    res.json({ message: 'Formular-Einstellungen gespeichert.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Fehler beim Speichern der Formular-Einstellungen.' });
+  }
+});
+
+// Logo-Upload (erfordert Admin-Berechtigung)
+router.post('/form/logo', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { logo_url } = req.body;
+
+    if (!logo_url) {
+      return res.status(400).json({ error: 'Logo-URL ist erforderlich.' });
+    }
+
+    // URL validieren
+    try {
+      new URL(logo_url);
+    } catch {
+      return res.status(400).json({ error: 'Ungültige URL.' });
+    }
+
+    // Prüfen ob bereits Einstellungen existieren
+    const existingResult = await pool.query('SELECT id FROM form_settings LIMIT 1');
+    
+    if (existingResult.rows.length > 0) {
+      // Update bestehende Einstellungen
+      await pool.query(
+        `UPDATE form_settings SET 
+         logo_url = $1, updated_at = CURRENT_TIMESTAMP 
+         WHERE id = $2`,
+        [logo_url, existingResult.rows[0].id]
+      );
+    } else {
+      // Neue Einstellungen erstellen
+      await pool.query(
+        `INSERT INTO form_settings (logo_url) VALUES ($1)`,
+        [logo_url]
+      );
+    }
+
+    res.json({ message: 'Logo erfolgreich gespeichert.' });
+  } catch (error) {
+    console.error('Error saving logo:', error);
+    res.status(500).json({ error: 'Fehler beim Speichern des Logos.' });
+  }
+});
+
+// Admin-Routen erfordern Authentifizierung und Admin-Berechtigung
 router.use(authenticateToken);
 router.use(requireAdmin);
 
@@ -141,5 +217,7 @@ router.post('/app', async (req, res) => {
     res.status(500).json({ error: 'Fehler beim Speichern der Anwendungseinstellungen.' });
   }
 });
+
+
 
 module.exports = router; 

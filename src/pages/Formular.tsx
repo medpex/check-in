@@ -7,6 +7,7 @@ import { EmailVerificationForm } from "@/components/formular/EmailVerificationFo
 import { GuestRegistrationForm } from "@/components/formular/GuestRegistrationForm";
 import { QRCodeDisplay } from "@/components/formular/QRCodeDisplay";
 import { GuestTypeSelection } from "@/components/formular/GuestTypeSelection";
+import { TimeLimitPopup } from "@/components/ui/TimeLimitPopup";
 
 interface GuestRegistrationFormData {
   name: string;
@@ -27,6 +28,8 @@ const Formular = () => {
     hasFamily: boolean;
     hasFriends: boolean;
   }>({ hasFamily: false, hasFriends: false });
+  const [showTimeLimitPopup, setShowTimeLimitPopup] = useState(false);
+  const [isTimeExpired, setIsTimeExpired] = useState(false);
 
   // Prüfe vorhandene Gäste-Typen wenn mainGuest vorhanden ist
   useEffect(() => {
@@ -41,6 +44,31 @@ const Formular = () => {
       loadAdditionalGuests();
     }
   }, [mainGuest, guestType]);
+
+  // Prüfe Zeitlimit beim Laden der Komponente und alle 30 Sekunden
+  useEffect(() => {
+    checkTimeLimit();
+    
+    const interval = setInterval(() => {
+      checkTimeLimit();
+    }, 30000); // Alle 30 Sekunden prüfen
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  const checkTimeLimit = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/time-limit/status');
+      const data = await response.json();
+      
+      if (data.status === 'success' && data.data.isExpired) {
+        setShowTimeLimitPopup(true);
+        setIsTimeExpired(true);
+      }
+    } catch (error) {
+      console.error('Error checking time limit:', error);
+    }
+  };
 
   const checkExistingGuestTypes = async () => {
     if (!mainGuest) return;
@@ -129,8 +157,8 @@ const Formular = () => {
       return;
     }
 
-    if (!mainGuest) {
-      toast.error("Hauptgast nicht gefunden");
+    if (!mainGuest || !guestType) {
+      toast.error("Hauptgast oder Gast-Typ nicht gefunden");
       return;
     }
 
@@ -146,7 +174,7 @@ const Formular = () => {
         name: newGuestName,
         email: newGuestEmail,
         mainGuestId: mainGuest.id,
-        guestType: guestType!,
+        guestType: guestType,
       });
 
       setAdditionalGuests([...additionalGuests, additionalGuestResponse]);
@@ -240,6 +268,13 @@ const Formular = () => {
         onAddAdditionalGuest={addAdditionalGuest}
         onRemoveAdditionalGuest={removeAdditionalGuest}
         onBackToSelection={() => setGuestType(null)}
+      />
+
+      {/* Time Limit Popup */}
+      <TimeLimitPopup 
+        isOpen={showTimeLimitPopup}
+        onClose={() => setShowTimeLimitPopup(false)}
+        isExpired={isTimeExpired}
       />
     </div>
   );
