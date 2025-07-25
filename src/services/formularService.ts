@@ -88,7 +88,7 @@ class FormularService {
       guest_type: guestType,
     });
 
-    const response = await fetch(apiUrl(`/guests?${params.toString()}`));
+    const response = await fetch(apiUrl(`/guests/additional-guests?${params.toString()}`));
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

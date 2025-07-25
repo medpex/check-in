@@ -91,6 +91,36 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// Öffentliche Route zum Laden zusätzlicher Gäste (ohne Authentifizierung)
+router.get('/additional-guests', async (req, res) => {
+  try {
+    const { main_guest_id, guest_type } = req.query;
+    
+    if (!main_guest_id || !guest_type) {
+      return res.status(400).json({ error: 'main_guest_id und guest_type sind erforderlich' });
+    }
+
+    if (!['family', 'friends'].includes(guest_type)) {
+      return res.status(400).json({ error: 'Ungültiger guest_type. Erlaubt: family, friends' });
+    }
+
+    // Validiere UUID-Format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(main_guest_id)) {
+      return res.status(400).json({ error: 'Ungültiges main_guest_id Format (UUID erforderlich)' });
+    }
+
+    const query = 'SELECT id, name, email, qr_code, main_guest_id, guest_type, created_at, email_sent, email_sent_at FROM guests WHERE main_guest_id = $1 AND guest_type = $2 ORDER BY created_at DESC';
+    const result = await pool.query(query, [main_guest_id, guest_type]);
+    
+    console.log(`✅ Zusätzliche Gäste geladen: ${result.rows.length} ${guest_type} für Hauptgast ${main_guest_id}`);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Fehler beim Laden der zusätzlichen Gäste:', error);
+    res.status(500).json({ error: 'Fehler beim Laden der zusätzlichen Gäste' });
+  }
+});
+
 // Öffentliche E-Mail-Routen (ohne Authentifizierung)
 router.post('/send-family-emails', async (req, res) => {
   try {

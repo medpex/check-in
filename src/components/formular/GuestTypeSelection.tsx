@@ -18,7 +18,7 @@ interface GuestTypeSelectionProps {
   newGuestName: string;
   newGuestEmail: string;
   isLoading: boolean;
-  onGuestTypeSelect: (type: "family" | "friends") => void;
+  onGuestTypeSelect: (type: "family" | "friends") => Promise<void>;
   onNewGuestNameChange: (name: string) => void;
   onNewGuestEmailChange: (email: string) => void;
   onAddAdditionalGuest: () => void;
@@ -98,8 +98,12 @@ export const GuestTypeSelection = ({
           <div className="grid grid-cols-2 gap-4">
             <Button
               onClick={() => onGuestTypeSelect("family")}
-              className="bg-white/20 hover:bg-white/30 text-white flex flex-col items-center p-6 h-auto"
-              disabled={isLoading}
+              className={`flex flex-col items-center p-6 h-auto ${
+                existingGuestTypes.hasFriends 
+                  ? "bg-gray-500/20 text-gray-400 cursor-not-allowed" 
+                  : "bg-white/20 hover:bg-white/30 text-white"
+              }`}
+              disabled={isLoading || existingGuestTypes.hasFriends}
             >
               <Users className="h-8 w-8 mb-2" />
               <span className="text-sm">Familie</span>
@@ -109,12 +113,21 @@ export const GuestTypeSelection = ({
                   Bereits vorhanden
                 </Badge>
               )}
+              {existingGuestTypes.hasFriends && (
+                <Badge className="mt-2 bg-red-500/20 text-white">
+                  Nicht verfügbar
+                </Badge>
+              )}
             </Button>
             
             <Button
               onClick={() => onGuestTypeSelect("friends")}
-              className="bg-white/20 hover:bg-white/30 text-white flex flex-col items-center p-6 h-auto"
-              disabled={isLoading}
+              className={`flex flex-col items-center p-6 h-auto ${
+                existingGuestTypes.hasFamily 
+                  ? "bg-gray-500/20 text-gray-400 cursor-not-allowed" 
+                  : "bg-white/20 hover:bg-white/30 text-white"
+              }`}
+              disabled={isLoading || existingGuestTypes.hasFamily}
             >
               <UserPlus className="h-8 w-8 mb-2" />
               <span className="text-sm">Freunde</span>
@@ -122,6 +135,11 @@ export const GuestTypeSelection = ({
               {existingGuestTypes.hasFriends && (
                 <Badge className="mt-2 bg-green-500/20 text-white">
                   Bereits vorhanden
+                </Badge>
+              )}
+              {existingGuestTypes.hasFamily && (
+                <Badge className="mt-2 bg-red-500/20 text-white">
+                  Nicht verfügbar
                 </Badge>
               )}
             </Button>

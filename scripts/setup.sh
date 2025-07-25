@@ -24,6 +24,8 @@ echo "✅ Docker und Docker Compose sind installiert"
 if [ ! -f .env ]; then
     echo "📝 Erstelle .env Datei..."
     echo "VITE_API_URL=http://localhost:3001/api" > .env
+    echo "TIME_LIMIT_MINUTES=5" >> .env
+    echo "DEVELOPER_TOKEN=dev_token_123" >> .env
 fi
 
 if [ ! -f backend/.env ]; then
@@ -37,6 +39,8 @@ if [ ! -f backend/.env ]; then
     echo "DB_PASSWORD=secure_password_123" >> backend/.env
     echo "PORT=3001" >> backend/.env
     echo "CORS_ORIGIN=http://localhost:8080" >> backend/.env
+    echo "TIME_LIMIT_MINUTES=5" >> backend/.env
+    echo "DEVELOPER_TOKEN=dev_token_123" >> backend/.env
 fi
 
 echo "🐳 Starte Docker Services..."
@@ -73,19 +77,36 @@ else
     docker compose exec backend npm run seed
 fi
 
+echo "⏰ Prüfe Zeitlimit-Status..."
+if command -v docker-compose &> /dev/null; then
+    docker-compose exec backend curl -s http://localhost:3001/api/time-limit/status
+else
+    docker compose exec backend curl -s http://localhost:3001/api/time-limit/status
+fi
+
 echo ""
 echo "🎉 Setup abgeschlossen!"
 echo ""
 echo "📱 Frontend: http://localhost:8080"
 echo "🔧 Backend API: http://localhost:3001"
 echo "🗄️  PostgreSQL: localhost:5432"
+echo "🔐 Admin Login: admin / admin123"
+echo "⏰ Zeitlimit: 5 Minuten (konfigurierbar)"
 echo ""
 
 if command -v docker-compose &> /dev/null; then
     echo "Logs anzeigen: docker-compose logs -f"
     echo "Services stoppen: docker-compose down"
+    echo "Zeitlimit zurücksetzen: docker-compose exec backend curl -X POST http://localhost:3001/api/time-limit/reset -H 'Content-Type: application/json' -d '{\"token\":\"dev_token_123\"}'"
 else
     echo "Logs anzeigen: docker compose logs -f"
     echo "Services stoppen: docker compose down"
+    echo "Zeitlimit zurücksetzen: docker compose exec backend curl -X POST http://localhost:3001/api/time-limit/reset -H 'Content-Type: application/json' -d '{\"token\":\"dev_token_123\"}'"
 fi
+echo ""
+echo "📋 Neue Features:"
+echo "  • Zeitlimit-System (5 Minuten Standard)"
+echo "  • Either/Or Gästetyp-Auswahl (Familie ODER Freunde)"
+echo "  • E-Mail-Versand für zusätzliche Gäste"
+echo "  • Globales Zeitlimit-Popup"
 echo ""

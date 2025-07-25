@@ -11,6 +11,8 @@ Eine moderne Web-Anwendung zum Verwalten von Gästen und Check-ins bei Veranstal
 - **Gäste hinzufügen** - Neue Gäste mit automatischer QR-Code-Generierung
 - **Einladungen erstellen** - QR-Codes für jeden Gast generieren
 - **Gästeliste verwalten** - Übersicht aller eingeladenen Gäste
+- **Either/Or Gästetypen** - Entweder Familienmitglieder ODER Freunde hinzufügen
+- **E-Mail-Versand** - Automatischer E-Mail-Versand für zusätzliche Gäste
 
 ### 📱 QR-Code Scanner
 - **Live-Scanner** - Echtzeitscanning über die Webcam
@@ -22,6 +24,12 @@ Eine moderne Web-Anwendung zum Verwalten von Gästen und Check-ins bei Veranstal
 - **Eingecheckte Gäste** - Live-Übersicht aller anwesenden Gäste
 - **Scan-Historie** - Letzte gescannte QR-Codes anzeigen
 - **Responsive Design** - Funktioniert auf Desktop und Mobile
+
+### ⏰ Zeitlimit-System
+- **Konfigurierbare Zeitlimits** - Von 5 Minuten bis zu mehreren Monaten
+- **Read-Only Modus** - Automatische Sperrung nach Ablauf
+- **Globales Popup** - Prominente Warnung bei Zeitlimit-Ablauf
+- **Entwickler-Tools** - Reset und Konfiguration für Tests
 
 ## 🚀 Schnellstart mit Docker
 
@@ -60,6 +68,8 @@ docker-compose exec backend npm run seed
 - **Frontend**: http://localhost:8080
 - **Backend API**: http://localhost:3001
 - **PostgreSQL**: localhost:5432
+- **Admin Login**: admin / admin123
+- **Zeitlimit**: 5 Minuten (konfigurierbar)
 
 ## 🐳 Docker Commands
 
@@ -98,6 +108,9 @@ docker-compose down -v
 
 # Reset-Script verwenden
 ./scripts/reset.sh
+
+# Zeitlimit zurücksetzen (für Tests)
+docker-compose exec backend curl -X POST http://localhost:3001/api/time-limit/reset -H 'Content-Type: application/json' -d '{"token":"dev_token_123"}'
 ```
 
 ## 🏗️ Technologie Stack
@@ -204,12 +217,48 @@ docker-compose exec backend npm run migrate
 ### QR-Scanner
 ![Scanner](https://via.placeholder.com/600x400/10b981/ffffff?text=Scanner+Screenshot)
 
+## ⏰ Zeitlimit-Konfiguration
+
+### Standard-Einstellungen
+```bash
+# .env Datei anpassen
+TIME_LIMIT_MINUTES=5          # 5 Minuten (Standard für Tests)
+DEVELOPER_TOKEN=dev_token_123 # Token für Reset/Configure
+```
+
+### Zeitlimit-Beispiele
+```bash
+TIME_LIMIT_MINUTES=5          # 5 Minuten (Tests)
+TIME_LIMIT_MINUTES=20         # 20 Minuten
+TIME_LIMIT_MINUTES=60         # 1 Stunde
+TIME_LIMIT_MINUTES=1440       # 1 Tag
+TIME_LIMIT_MINUTES=131400     # 3 Monate
+TIME_LIMIT_MINUTES=525600     # 1 Jahr
+```
+
+### Zeitlimit verwalten
+```bash
+# Status prüfen
+curl http://localhost:3001/api/time-limit/status
+
+# Zeitlimit zurücksetzen (nur mit Token)
+curl -X POST http://localhost:3001/api/time-limit/reset \
+  -H 'Content-Type: application/json' \
+  -d '{"token":"dev_token_123"}'
+
+# Zeitlimit konfigurieren (nur mit Token)
+curl -X POST http://localhost:3001/api/time-limit/configure \
+  -H 'Content-Type: application/json' \
+  -d '{"token":"dev_token_123","minutes":30}'
+```
+
 ## 🔒 Sicherheit
 
 - **CORS**-Schutz für API-Zugriff
 - **Helmet.js** für Security Headers
 - **SQL Injection**-Schutz durch Parameter-Queries
 - **UUID**-basierte IDs für sichere Referenzen
+- **Zeitlimit-System** für kontrollierte Nutzung
 
 ## 🚀 Deployment
 
