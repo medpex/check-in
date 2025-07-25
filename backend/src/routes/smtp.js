@@ -78,18 +78,16 @@ router.post('/config', async (req, res) => {
       password: req.body.password ? '***' : 'undefined' 
     });
     
-    const { host, port, secure, user, password, from_name, from_email } = req.body;
+    const { host, port, secure, username, password, from_name, from_email } = req.body;
 
-    // Erweiterte Validierung
-    if (!host || !port || !user || !password || !from_name || !from_email) {
-      console.log('❌ SMTP Config - Validierungsfehler: Fehlende Felder');
+    // Erweiterte Validierung - Benutzername und Passwort sind optional
+    if (!host || !port || !from_name || !from_email) {
+      console.log('❌ SMTP Config - Validierungsfehler: Fehlende Pflichtfelder');
       return res.status(400).json({ 
-        error: 'Alle Felder sind erforderlich',
+        error: 'Host, Port, Absender-Name und Absender-E-Mail sind erforderlich',
         missing_fields: {
           host: !host,
           port: !port,
-          user: !user,
-          password: !password,
           from_name: !from_name,
           from_email: !from_email
         }
@@ -130,8 +128,8 @@ router.post('/config', async (req, res) => {
           host VARCHAR(500) NOT NULL,
           port INTEGER NOT NULL,
           secure BOOLEAN NOT NULL DEFAULT false,
-          "user" VARCHAR(500) NOT NULL,
-          password TEXT NOT NULL,
+          "user" VARCHAR(500),
+          password TEXT,
           from_name VARCHAR(500) NOT NULL,
           from_email VARCHAR(500) NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -170,23 +168,23 @@ router.post('/config', async (req, res) => {
     let result;
     if (existingConfig.rows.length > 0) {
       console.log('📧 SMTP Config - Update existierende Konfiguration mit ID:', existingConfig.rows[0].id);
-      // Update existierende Konfiguration - Store password for email sending
+      // Update existierende Konfiguration - Benutzername und Passwort können null sein
       result = await client.query(
         `UPDATE smtp_config 
-         SET host = $1, port = $2, secure = $3, "user" = $4, password = $5, 
+         SET host = $1, port = $2, secure = $3, username = $4, password = $5, 
              from_name = $6, from_email = $7, updated_at = CURRENT_TIMESTAMP
          WHERE id = $8 
-         RETURNING id, host, port, secure, "user", from_name, from_email, created_at, updated_at`,
-        [host, portNum, secure === true, user, password, from_name, from_email, existingConfig.rows[0].id]
+         RETURNING id, host, port, secure, username, from_name, from_email, created_at, updated_at`,
+        [host, portNum, secure === true, username || null, password || null, from_name, from_email, existingConfig.rows[0].id]
       );
     } else {
       console.log('📧 SMTP Config - Neue Konfiguration erstellen');
-      // Neue Konfiguration erstellen - Store password for email sending
+      // Neue Konfiguration erstellen - Benutzername und Passwort können null sein
       result = await client.query(
-        `INSERT INTO smtp_config (host, port, secure, "user", password, from_name, from_email)
+        `INSERT INTO smtp_config (host, port, secure, username, password, from_name, from_email)
          VALUES ($1, $2, $3, $4, $5, $6, $7) 
-         RETURNING id, host, port, secure, "user", from_name, from_email, created_at, updated_at`,
-        [host, portNum, secure === true, user, password, from_name, from_email]
+         RETURNING id, host, port, secure, username, from_name, from_email, created_at, updated_at`,
+        [host, portNum, secure === true, username || null, password || null, from_name, from_email]
       );
     }
 
@@ -222,27 +220,33 @@ router.post('/config', async (req, res) => {
 router.post('/test', async (req, res) => {
   try {
     console.log('📧 SMTP Test - Request erhalten:', { ...req.body, password: '***' });
-    const { host, port, secure, user, password, from_name, from_email } = req.body;
+    const { host, port, secure, username, password, from_name, from_email } = req.body;
 
-    if (!host || !port || !user || !password) {
+    if (!host || !port) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Alle SMTP-Felder sind für den Test erforderlich' 
+        message: 'Host und Port sind für den Test erforderlich' 
       });
     }
 
-    // Transporter erstellen
-    const transporter = nodemailer.createTransport({
+    // Transporter erstellen - mit oder ohne Authentifizierung
+    const transporterConfig = {
       host,
       port: parseInt(port),
       secure: secure === true,
-      auth: {
-        user,
-        pass: password
-      },
       debug: true,
       logger: true
-    });
+    };
+
+    // Authentifizierung nur hinzufügen wenn Benutzername und Passwort vorhanden sind
+    if (username && password) {
+      transporterConfig.auth = {
+        user: username,
+        pass: password
+      };
+    }
+
+    const transporter = nodemailer.createTransport(transporterConfig);
 
     console.log('📧 SMTP Test - Transporter erstellt, teste Verbindung...');
     
@@ -267,7 +271,7 @@ router.post('/test', async (req, res) => {
 router.post('/send-test-email', async (req, res) => {
   try {
     console.log('📧 Test-E-Mail - Request erhalten');
-    const { host, port, secure, user, password, from_name, from_email, test_email } = req.body;
+    const { host, port, secure, username, password, from_name, from_email, test_email } = req.body;
 
     if (!test_email) {
       return res.status(400).json({ 
@@ -276,16 +280,22 @@ router.post('/send-test-email', async (req, res) => {
       });
     }
 
-    // Transporter erstellen
-    const transporter = nodemailer.createTransport({
+    // Transporter erstellen - mit oder ohne Authentifizierung
+    const transporterConfig = {
       host,
       port: parseInt(port),
-      secure: secure === true,
-      auth: {
-        user,
+      secure: secure === true
+    };
+
+    // Authentifizierung nur hinzufügen wenn Benutzername und Passwort vorhanden sind
+    if (username && password) {
+      transporterConfig.auth = {
+        user: username,
         pass: password
-      }
-    });
+      };
+    }
+
+    const transporter = nodemailer.createTransport(transporterConfig);
 
     // Test-E-Mail senden
     const mailOptions = {
@@ -408,16 +418,22 @@ router.post('/send-business-invite', async (req, res) => {
 
     const config = configResult.rows[0];
     
-    // SMTP-Transporter erstellen
-    const transporter = nodemailer.createTransport({
+    // SMTP-Transporter erstellen - mit oder ohne Authentifizierung
+    const transporterConfig = {
       host: config.host,
       port: config.port,
-      secure: config.secure,
-      auth: {
+      secure: config.secure
+    };
+
+    // Authentifizierung nur hinzufügen wenn Benutzername und Passwort vorhanden sind
+    if (config.username && config.password) {
+      transporterConfig.auth = {
         user: config.username,
         pass: config.password
-      }
-    });
+      };
+    }
+
+    const transporter = nodemailer.createTransport(transporterConfig);
 
     // E-Mail-Inhalt mit Template erstellen
     const emailTemplate = await emailTemplateService.generateBusinessInvitationEmail(businessEmail);
@@ -493,16 +509,22 @@ router.post('/send-qr-code', async (req, res) => {
 
     const guest = guestResult.rows[0];
     
-    // SMTP-Transporter erstellen
-    const transporter = nodemailer.createTransport({
+    // SMTP-Transporter erstellen - mit oder ohne Authentifizierung
+    const transporterConfig = {
       host: config.host,
       port: config.port,
-      secure: config.secure,
-      auth: {
+      secure: config.secure
+    };
+
+    // Authentifizierung nur hinzufügen wenn Benutzername und Passwort vorhanden sind
+    if (config.username && config.password) {
+      transporterConfig.auth = {
         user: config.username,
         pass: config.password
-      }
-    });
+      };
+    }
+
+    const transporter = nodemailer.createTransport(transporterConfig);
 
     // E-Mail-Inhalt mit Template erstellen
     const emailTemplate = await emailTemplateService.generateQRCodeEmail(guest, recipientEmail);

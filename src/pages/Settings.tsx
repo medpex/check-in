@@ -591,7 +591,7 @@ const Settings: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="user" className="text-white">
-                  Benutzername
+                  Benutzername (optional)
                 </Label>
                 <Input
                   type="text"
@@ -599,11 +599,13 @@ const Settings: React.FC = () => {
                   value={smtpConfig.user}
                   onChange={(e) => setSmtpConfig({ ...smtpConfig, user: e.target.value })}
                   className="bg-white/10 border-white/30 text-white placeholder:text-white/50 focus:border-white/50"
+                  placeholder="Leer lassen für SMTP ohne Authentifizierung"
                 />
+                <p className="text-white/50 text-xs">Leer lassen für SMTP ohne Authentifizierung</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-white">
-                  Passwort
+                  Passwort (optional)
                 </Label>
                 <Input
                   type="password"
@@ -611,7 +613,9 @@ const Settings: React.FC = () => {
                   value={smtpConfig.password}
                   onChange={(e) => setSmtpConfig({ ...smtpConfig, password: e.target.value })}
                   className="bg-white/10 border-white/30 text-white placeholder:text-white/50 focus:border-white/50"
+                  placeholder="Leer lassen für SMTP ohne Authentifizierung"
                 />
+                <p className="text-white/50 text-xs">Leer lassen für SMTP ohne Authentifizierung</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="from_name" className="text-white">

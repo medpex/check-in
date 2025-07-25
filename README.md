@@ -1,77 +1,21 @@
 
-# 🎉 QR-Code Scanner Party App
+# QR Scanner Party App
 
-Eine moderne Web-Anwendung zum Verwalten von Gästen und Check-ins bei Veranstaltungen mittels QR-Code-Scanner.
+Eine moderne Web-Anwendung für die Verwaltung von Gästen und Check-ins bei Veranstaltungen mit QR-Code-Scanning.
 
-![Party App Banner](https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&h=200&fit=crop)
+## 🚀 Features
 
-## ✨ Features
+- **QR-Code-Generierung**: Automatische Erstellung von QR-Codes für jeden Gast
+- **Check-in/Check-out System**: Einfache An- und Abmeldung von Gästen
+- **Gästeverwaltung**: Vollständige CRUD-Operationen für Gäste
+- **Benutzer-Management**: Admin- und Scanner-Rollen mit verschiedenen Berechtigungen
+- **E-Mail-Versand**: Automatische E-Mail-Benachrichtigungen für Gäste
+- **Formular-Customizing**: Anpassbare Hintergrundfarben und Logos
+- **Zeitlimit-System**: Konfigurierbare Laufzeitbegrenzung mit Read-Only-Modus
+- **Either/Or Gästetypen**: Entweder Familienmitglieder ODER Freunde hinzufügen
+- **E-Mail-Versand**: SMTP-Konfiguration mit optionaler Authentifizierung
 
-### 🎫 Gästeverwaltung
-- **Gäste hinzufügen** - Neue Gäste mit automatischer QR-Code-Generierung
-- **Einladungen erstellen** - QR-Codes für jeden Gast generieren
-- **Gästeliste verwalten** - Übersicht aller eingeladenen Gäste
-- **Either/Or Gästetypen** - Entweder Familienmitglieder ODER Freunde hinzufügen
-- **E-Mail-Versand** - Automatischer E-Mail-Versand für zusätzliche Gäste
-
-### 📱 QR-Code Scanner
-- **Live-Scanner** - Echtzeitscanning über die Webcam
-- **Check-in/Check-out** - Flexibles Ein- und Auschecken
-- **Duplikatschutz** - Verhindert mehrfaches Scannen desselben Codes
-- **Live-Feedback** - Sofortige Bestätigung nach erfolgreichem Scan
-
-### 📊 Event-Dashboard
-- **Eingecheckte Gäste** - Live-Übersicht aller anwesenden Gäste
-- **Scan-Historie** - Letzte gescannte QR-Codes anzeigen
-- **Responsive Design** - Funktioniert auf Desktop und Mobile
-
-### ⏰ Zeitlimit-System
-- **Konfigurierbare Zeitlimits** - Von 5 Minuten bis zu mehreren Monaten
-- **Read-Only Modus** - Automatische Sperrung nach Ablauf
-- **Globales Popup** - Prominente Warnung bei Zeitlimit-Ablauf
-- **Entwickler-Tools** - Reset und Konfiguration für Tests
-
-## 🚀 Schnellstart mit Docker
-
-### Voraussetzungen
-
-- **Docker** und **Docker Compose**
-- **Git** (zum Klonen des Repositories)
-
-### 1-Klick Setup
-
-```bash
-# Repository klonen
-git clone https://github.com/medpex/check-in.git
-cd check-in
-
-# Setup-Script ausführen (empfohlen)
-chmod +x scripts/setup.sh
-./scripts/setup.sh
-```
-
-### Manueller Start
-
-```bash
-# Alle Services starten
-docker-compose up -d
-
-# Datenbankmigrationen ausführen
-docker-compose exec backend npm run migrate
-
-# Testdaten erstellen
-docker-compose exec backend npm run seed
-```
-
-### 🌐 Zugriff
-
-- **Frontend**: http://localhost:8080
-- **Backend API**: http://localhost:3001
-- **PostgreSQL**: localhost:5432
-- **Admin Login**: admin / admin123
-- **Zeitlimit**: 5 Minuten (konfigurierbar)
-
-### 🔧 Konfiguration
+## 🔧 Konfiguration
 
 Die App-URL kann einfach angepasst werden:
 
@@ -82,233 +26,294 @@ APP_BASE_URL=https://ihre-domain.de
 
 **Standard**: `https://check-in.home-ki.eu`
 
-## 🐳 Docker Commands
+### SMTP-Konfiguration
 
-### Entwicklung
+Das System unterstützt SMTP-Server mit und ohne Authentifizierung:
+
+#### **Mit Authentifizierung (Standard):**
+- Host: `smtp.gmail.com`
+- Port: `587`
+- Benutzername: `ihre-email@gmail.com`
+- Passwort: `ihr-app-passwort`
+
+#### **Ohne Authentifizierung (lokale SMTP-Server):**
+- Host: `localhost` oder `127.0.0.1`
+- Port: `25` (Standard SMTP-Port)
+- Benutzername: **leer lassen**
+- Passwort: **leer lassen**
+
+**Hinweis**: Bei SMTP-Servern ohne Authentifizierung können die Felder "Benutzername" und "Passwort" leer gelassen werden. Das System erkennt automatisch, ob Authentifizierung erforderlich ist.
+
+## 🌐 Zugriff
+
+- **Frontend**: http://localhost:8080
+- **Backend API**: http://localhost:3001
+- **PostgreSQL**: localhost:5432
+- **Admin Login**: admin / admin123
+- **Zeitlimit**: 5 Minuten (konfigurierbar)
+
+## 🛠️ Installation
+
+### Voraussetzungen
+
+- Docker und Docker Compose
+- Git
+
+### Schnellstart
+
 ```bash
-# Alle Services starten
-docker-compose up -d
+# Repository klonen
+git clone <repository-url>
+cd qrcode-feier-checkin
 
-# Services mit Build
-docker-compose up -d --build
+# Setup ausführen
+chmod +x scripts/setup.sh
+./scripts/setup.sh
 
-# Logs anzeigen
-docker-compose logs -f
-
-# Bestimmte Service-Logs
-docker-compose logs -f frontend
-docker-compose logs -f backend
+# Anwendung starten
+docker compose up -d
 ```
 
-### Production
-```bash
-# Production-Modus starten
-docker-compose --profile production up -d frontend-prod
-
-# Komplette Production-Stack
-docker-compose --profile production up -d
-```
-
-### Wartung
-```bash
-# Services stoppen
-docker-compose down
-
-# Alles zurücksetzen (inkl. Datenbank)
-docker-compose down -v
-
-# Reset-Script verwenden
-./scripts/reset.sh
-
-# Zeitlimit zurücksetzen (für Tests)
-docker-compose exec backend curl -X POST http://localhost:3001/api/time-limit/reset -H 'Content-Type: application/json' -d '{"token":"dev_token_123"}'
-```
-
-## 🏗️ Technologie Stack
-
-### Frontend
-- **React 18** mit **TypeScript**
-- **Vite** - Build Tool & Dev Server
-- **Tailwind CSS** + **shadcn/ui**
-- **TanStack Query** - State Management
-- **qr-scanner** - QR-Code Scanning
-
-### Backend
-- **Node.js** mit **Express**
-- **PostgreSQL** - Datenbank
-- **qrcode** - QR-Code Generierung
-- **CORS** & **Helmet** - Sicherheit
-
-### 🐳 Containerization
-- **Docker** & **Docker Compose**
-- **Multi-Stage Builds** für optimierte Images
-- **Nginx** für Production
-- **Health Checks** für Service-Monitoring
-
-## 📊 API Endpunkte
-
-### Gäste
-- `GET /api/guests` - Alle Gäste abrufen
-- `POST /api/guests` - Neuen Gast erstellen
-- `DELETE /api/guests/:id` - Gast löschen
-
-### Check-ins
-- `GET /api/checkins` - Eingecheckte Gäste abrufen
-- `POST /api/checkins` - Gast einchecken
-- `DELETE /api/checkins/:guest_id` - Gast auschecken
-
-### Health Check
-- `GET /api/health` - Service-Status prüfen
-
-## 🔧 Entwicklung
-
-### Lokale Entwicklung ohne Docker
+### Manuelle Installation
 
 ```bash
-# Frontend
-npm install
-npm run dev
+# 1. Repository klonen
+git clone <repository-url>
+cd qrcode-feier-checkin
 
-# Backend (separates Terminal)
-cd backend
-npm install
-npm run dev
-```
-
-### Database Management
-
-```bash
-# Migrationen ausführen
-docker-compose exec backend npm run migrate
-
-# Testdaten erstellen
-docker-compose exec backend npm run seed
-
-# Datenbank-Shell öffnen
-docker-compose exec postgres psql -U qr_scanner_user -d qr_scanner_db
-```
-
-## 🐛 Troubleshooting
-
-### Port-Konflikte
-```bash
-# Andere Ports verwenden
-FRONTEND_PORT=3000 BACKEND_PORT=3002 docker-compose up
-```
-
-### Container neu starten
-```bash
-docker-compose restart backend
-docker-compose restart frontend
-```
-
-### Logs prüfen
-```bash
-# Alle Logs
-docker-compose logs
-
-# Specific service
-docker-compose logs backend
-docker-compose logs postgres
-```
-
-### Datenbank-Probleme
-```bash
-# Datenbank zurücksetzen
-docker-compose down -v
-docker-compose up -d postgres
-docker-compose exec backend npm run migrate
-```
-
-## 📱 Screenshots
-
-### Dashboard
-![Dashboard](https://via.placeholder.com/600x400/6366f1/ffffff?text=Dashboard+Screenshot)
-
-### QR-Scanner
-![Scanner](https://via.placeholder.com/600x400/10b981/ffffff?text=Scanner+Screenshot)
-
-## ⏰ Zeitlimit-Konfiguration
-
-### Standard-Einstellungen
-```bash
+# 2. Umgebungsvariablen konfigurieren
+cp env.example .env
 # .env Datei anpassen
-TIME_LIMIT_MINUTES=5          # 5 Minuten (Standard für Tests)
-DEVELOPER_TOKEN=dev_token_123 # Token für Reset/Configure
+
+# 3. Docker-Container starten
+docker compose up -d
+
+# 4. Datenbank initialisieren (automatisch beim ersten Start)
 ```
 
-### Zeitlimit-Beispiele
+## 📧 E-Mail-Konfiguration
+
+### SMTP-Einstellungen
+
+1. **Admin-Bereich öffnen**: http://localhost:8080/admin
+2. **Einstellungen → SMTP-Konfiguration**
+3. **Konfiguration eingeben**:
+   - **SMTP-Server**: z.B. `smtp.gmail.com`
+   - **Port**: z.B. `587`
+   - **Sichere Verbindung**: Aktivieren für SSL/TLS
+   - **Benutzername**: Ihre E-Mail-Adresse (optional)
+   - **Passwort**: Ihr App-Passwort (optional)
+   - **Absender-Name**: z.B. "Event Team"
+   - **Absender-E-Mail**: z.B. `event@ihre-domain.com`
+
+### Testen der E-Mail-Konfiguration
+
+1. **Verbindung testen**: Klicken Sie auf "Verbindung testen"
+2. **Test-E-Mail senden**: Geben Sie eine Test-E-Mail-Adresse ein
+3. **Konfiguration speichern**: Klicken Sie auf "Speichern"
+
+### Lokale SMTP-Server
+
+Für lokale SMTP-Server (z.B. Postfix, Exchange) können die Authentifizierungsfelder leer gelassen werden:
+
+```
+Host: localhost
+Port: 25
+Benutzername: (leer lassen)
+Passwort: (leer lassen)
+```
+
+## 🔐 Sicherheit
+
+- **JWT-Token-basierte Authentifizierung**
+- **Bcrypt-Passwort-Hashing**
+- **CORS-Konfiguration**
+- **Zeitlimit-System** mit Read-Only-Modus
+- **Umgebungsvariablen** für sensible Daten
+
+## 🗄️ Datenbank
+
+### Tabellen
+
+- `guests`: Gästedaten mit QR-Codes
+- `checkins`: Check-in/Check-out-Logs
+- `users`: Benutzer und Rollen
+- `business_emails`: Berechtigte Geschäfts-E-Mails
+- `form_settings`: Formular-Customizing
+- `smtp_config`: E-Mail-Server-Konfiguration
+- `install_info`: Installations- und Zeitlimit-Daten
+
+### Backup
+
 ```bash
-TIME_LIMIT_MINUTES=5          # 5 Minuten (Tests)
-TIME_LIMIT_MINUTES=20         # 20 Minuten
-TIME_LIMIT_MINUTES=60         # 1 Stunde
-TIME_LIMIT_MINUTES=1440       # 1 Tag
-TIME_LIMIT_MINUTES=131400     # 3 Monate
-TIME_LIMIT_MINUTES=525600     # 1 Jahr
+# Datenbank-Backup erstellen
+docker compose exec postgres pg_dump -U qr_scanner_user qr_scanner_db > backup.sql
+
+# Backup wiederherstellen
+docker compose exec -T postgres psql -U qr_scanner_user qr_scanner_db < backup.sql
 ```
-
-### Zeitlimit verwalten
-```bash
-# Status prüfen
-curl http://localhost:3001/api/time-limit/status
-
-# Zeitlimit zurücksetzen (nur mit Token)
-curl -X POST http://localhost:3001/api/time-limit/reset \
-  -H 'Content-Type: application/json' \
-  -d '{"token":"dev_token_123"}'
-
-# Zeitlimit konfigurieren (nur mit Token)
-curl -X POST http://localhost:3001/api/time-limit/configure \
-  -H 'Content-Type: application/json' \
-  -d '{"token":"dev_token_123","minutes":30}'
-```
-
-## 🔒 Sicherheit
-
-- **CORS**-Schutz für API-Zugriff
-- **Helmet.js** für Security Headers
-- **SQL Injection**-Schutz durch Parameter-Queries
-- **UUID**-basierte IDs für sichere Referenzen
-- **Zeitlimit-System** für kontrollierte Nutzung
 
 ## 🚀 Deployment
 
-### Docker Hub
-```bash
-# Images taggen und pushen
-docker tag qr-scanner-app:latest username/qr-scanner-app:latest
-docker push username/qr-scanner-app:latest
+### Produktionsumgebung
+
+1. **Umgebungsvariablen anpassen**:
+   ```bash
+   APP_BASE_URL=https://ihre-domain.de
+   TIME_LIMIT_MINUTES=43200  # 30 Tage
+   DEVELOPER_TOKEN=ihr-sicherer-token
+   ```
+
+2. **Docker-Container starten**:
+   ```bash
+   docker compose -f docker-compose.prod.yml up -d
+   ```
+
+3. **Reverse Proxy konfigurieren** (Nginx/Apache)
+
+### SSL/HTTPS
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name ihre-domain.de;
+    
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
+    
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+    
+    location /api {
+        proxy_pass http://localhost:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
 ```
 
-### Production Environment
-```bash
-# Production-Build erstellen
-docker-compose --profile production build
+## 🛠️ Wartung
 
-# Production starten
-docker-compose --profile production up -d
+### Logs anzeigen
+
+```bash
+# Alle Container
+docker compose logs
+
+# Spezifischer Container
+docker compose logs backend
+docker compose logs frontend
+docker compose logs postgres
 ```
 
-## 📈 Performance
+### Container neustarten
 
-- **Multi-Stage Docker Builds** für kleinere Images
-- **Connection Pooling** für Datenbankzugriffe
-- **Nginx** als Reverse Proxy in Production
-- **Health Checks** für Service-Monitoring
+```bash
+# Alle Container
+docker compose restart
 
-## 🤝 Beitragen
+# Spezifischer Container
+docker compose restart backend
+```
 
-1. Fork das Repository
-2. Feature Branch erstellen
-3. Änderungen committen
-4. Pull Request öffnen
+### Datenbank zurücksetzen
+
+```bash
+# Volumes löschen (ACHTUNG: Alle Daten gehen verloren!)
+docker compose down -v
+docker compose up -d
+```
+
+### Zeitlimit zurücksetzen (für Tests)
+
+```bash
+curl -X POST http://localhost:3001/api/time-limit/reset \
+  -H "Authorization: Bearer dev_token_123" \
+  -H "Content-Type: application/json"
+```
+
+## 📊 API-Endpunkte
+
+### Öffentliche Endpunkte
+
+- `GET /api/time-limit/status` - Zeitlimit-Status
+- `GET /api/guests/additional-guests` - Zusätzliche Gäste laden
+
+### Geschützte Endpunkte
+
+- `POST /api/auth/login` - Benutzer-Anmeldung
+- `GET /api/guests` - Gäste auflisten
+- `POST /api/guests` - Neuen Gast erstellen
+- `PUT /api/guests/:id` - Gast aktualisieren
+- `DELETE /api/guests/:id` - Gast löschen
+- `POST /api/checkins` - Check-in/Check-out
+- `GET /api/settings/smtp` - SMTP-Konfiguration abrufen
+- `POST /api/settings/smtp` - SMTP-Konfiguration speichern
+- `POST /api/smtp/test` - SMTP-Verbindung testen
+
+## 🐛 Troubleshooting
+
+### Häufige Probleme
+
+1. **Container startet nicht**:
+   ```bash
+   docker compose logs
+   docker system prune -a
+   ```
+
+2. **Datenbank-Verbindungsfehler**:
+   ```bash
+   docker compose restart postgres
+   docker compose exec postgres psql -U qr_scanner_user -d qr_scanner_db
+   ```
+
+3. **E-Mail-Versand funktioniert nicht**:
+   - SMTP-Konfiguration prüfen
+   - Firewall-Einstellungen kontrollieren
+   - Test-E-Mail senden
+
+4. **Zeitlimit-Popup erscheint nicht**:
+   ```bash
+   # Zeitlimit zurücksetzen
+   curl -X POST http://localhost:3001/api/time-limit/reset \
+     -H "Authorization: Bearer dev_token_123"
+   ```
+
+### Debug-Modus
+
+```bash
+# Backend-Logs mit Debug-Informationen
+docker compose logs -f backend
+
+# Frontend-Logs
+docker compose logs -f frontend
+```
+
+## 📝 Changelog
+
+### Version 1.0.0
+- ✅ QR-Code-Generierung und -Scanning
+- ✅ Gästeverwaltung mit CRUD-Operationen
+- ✅ Check-in/Check-out-System
+- ✅ Benutzer-Management mit Rollen
+- ✅ E-Mail-Versand mit SMTP-Konfiguration
+- ✅ Formular-Customizing
+- ✅ Zeitlimit-System mit Read-Only-Modus
+- ✅ Either/Or Gästetypen-Logik
+- ✅ SMTP ohne Authentifizierung
+- ✅ Zentrale App-URL-Konfiguration
 
 ## 📄 Lizenz
 
-MIT License - siehe [LICENSE](LICENSE) Datei.
+Dieses Projekt ist proprietär und nicht zur Weiterverbreitung bestimmt.
+
+## 🤝 Support
+
+Bei Fragen oder Problemen wenden Sie sich an den Entwickler.
 
 ---
 
-⭐ **Gefällt dir das Projekt?** Gib uns einen Stern auf GitHub!
-
-**Entwickelt mit Docker** 🐳 **für maximale Portabilität**
+**Entwickelt mit ❤️ für moderne Event-Management-Lösungen**

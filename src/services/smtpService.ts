@@ -6,8 +6,8 @@ export interface SMTPConfig {
   host: string;
   port: number;
   secure: boolean;
-  user: string;
-  password: string;
+  username?: string;
+  password?: string;
   from_name: string;
   from_email: string;
   created_at?: string;

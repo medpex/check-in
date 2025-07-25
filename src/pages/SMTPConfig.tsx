@@ -135,26 +135,24 @@ const SMTPConfigPage = () => {
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="user" className="text-white">Benutzername/E-Mail</Label>
+                    <Label htmlFor="user" className="text-white">Benutzername/E-Mail (optional)</Label>
                     <Input
                       id="user"
                       placeholder="deine@email.com"
-                      {...register("user", { required: "Benutzername ist erforderlich" })}
+                      {...register("user")}
                       className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
                     />
-                    {errors.user && (
-                      <p className="text-red-300 text-sm">{errors.user.message}</p>
-                    )}
+                    <p className="text-white/50 text-xs">Leer lassen für SMTP ohne Authentifizierung</p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-white">Passwort</Label>
+                    <Label htmlFor="password" className="text-white">Passwort (optional)</Label>
                     <div className="relative">
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        {...register("password", { required: "Passwort ist erforderlich" })}
+                        {...register("password")}
                         className="bg-white/20 border-white/30 text-white placeholder:text-white/70 pr-10"
                       />
                       <Button
@@ -171,9 +169,7 @@ const SMTPConfigPage = () => {
                         )}
                       </Button>
                     </div>
-                    {errors.password && (
-                      <p className="text-red-300 text-sm">{errors.password.message}</p>
-                    )}
+                    <p className="text-white/50 text-xs">Leer lassen für SMTP ohne Authentifizierung</p>
                   </div>
                 </div>
 
